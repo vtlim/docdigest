@@ -34,10 +34,12 @@ docdigest
     └── gpt.py
 ```
 
-### Local development setup
+### Local development
+
+Set up your local machine:
 
 ```
-# create env
+# create conda env
 conda create --name summary
 conda activate summary
 
@@ -46,4 +48,24 @@ conda install anthropic
 
 # install fresh docusaurus
 npx create-docusaurus@latest example-docs classic
+```
+
+For iterative development:
+
+```
+conda activate summary
+pip install -e .
+```
+
+Using the project:
+
+```
+# Use default config
+docdigest
+
+# Specify custom config
+docdigest --config my_config.json
+
+# Custom output file
+docdigest --config docs_config.json --output static/js/summaries.js
 ```
