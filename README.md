@@ -32,7 +32,7 @@ that summarizes the article. The content of the expander comes from the summary 
 
 The tooling to generate AI summaries for the docs has the following components.
 
-1. [Markdown parsing](./PART1.md)
+1. [Markdown parsing](./design/PART1.md)
 1. LLM text generation
 1. Summary imports
 1. Commit changes
@@ -71,13 +71,12 @@ docdigest --config docdigest_config.json --output static/js/summaries.js
 ```
 docdigest
 ├── __init__.py
+├── config.py                      # used by parts 1-2
 ├── commitify.py                   # part 4
-├── main.py                        # puts together parts 1-3
+├── main.py                        # centralized call for package
 ├── import_summaries.py            # part 3
 ├── parse_docs.py                  # part 1
-└── summarize                      # part 2
-    ├── claude.py
-    └── gpt.py
+└── summarize.py                   # part 2
 ```
 
 ## Local development
