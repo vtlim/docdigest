@@ -4,42 +4,11 @@ Uses mrkdwn_analysis to extract content from Markdown files and tracks changes v
 """
 
 import os
-import json
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
-
-
-def load_config(config_path: str) -> Dict:
-    """
-    Load configuration from JSON file.
-
-    Args:
-        config_path: Path to the JSON configuration file
-
-    Returns:
-        Configuration dictionary with 'directory' and 'commit' keys
-    """
-    try:
-        with open(config_path, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Configuration file not found: {config_path}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in configuration file: {e}")
-
-
-def save_config(config_path: str, config: Dict) -> None:
-    """
-    Save configuration to JSON file.
-
-    Args:
-        config_path: Path to the JSON configuration file
-        config: Configuration dictionary to save
-    """
-    with open(config_path, 'w', encoding='utf-8') as file:
-        json.dump(config, file, indent=2)
+from .config import load_config, save_config
 
 
 def get_current_commit_hash() -> str:
@@ -106,20 +75,17 @@ def get_changed_files(directory: str, since_commit: Optional[str] = None) -> Lis
         raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
 
 
-def get_files(config_path: str) -> List[str]:
+def get_files(directory: str, last_commit: Optional[str]) -> List[str]:
     """
     Get list of changed docs from a specified directory based on the commit difference.
 
     Args:
-        config_path: Path to the JSON configuration file
+        directory: Directory to scan for files
+        last_commit: Git commit hash to compare against (None for all files)
 
     Returns:
         List of file paths that have changed since the last recorded commit
     """
-    config = load_config(config_path)
-    directory = config.get('directory', '')
-    last_commit = config.get('commit')
-
     if not os.path.exists(directory):
         raise FileNotFoundError(f"Directory not found: {directory}")
 
@@ -201,12 +167,14 @@ def parse_doc(filepath: str) -> str:
         raise RuntimeError(f"{e}")
 
 
-def parse_markdown_files(config_path: str) -> Dict[str, str]:
+def parse_markdown_files(directory: str, last_commit: Optional[str], config_path: str) -> Dict[str, str]:
     """
     Parse all changed Markdown files and return content dictionary.
 
     Args:
-        config_path: Path to the JSON configuration file
+        directory: Directory to scan for markdown files
+        last_commit: Git commit hash to compare against (None for all files)
+        config_path: Path to the JSON configuration file (for saving updates)
 
     Returns:
         Dictionary mapping variable names to document content
@@ -215,11 +183,8 @@ def parse_markdown_files(config_path: str) -> Dict[str, str]:
             "api_reference": "The API provides endpoints for..."
         }
     """
-    config = load_config(config_path)
-    directory = config['directory']
-
     # Get list of changed files
-    changed_files = get_files(config_path)
+    changed_files = get_files(directory, last_commit)
 
     if not changed_files:
         print("No changed Markdown files found.")
@@ -240,6 +205,7 @@ def parse_markdown_files(config_path: str) -> Dict[str, str]:
             continue
 
     # Update config with current commit hash for next run
+    config = load_config(config_path)
     current_commit = get_current_commit_hash()
     config['commit'] = current_commit
     save_config(config_path, config)
@@ -253,7 +219,10 @@ if __name__ == "__main__":
 
     # Parse files
     try:
-        results = parse_markdown_files(config_path)
+        config = load_config(config_path)
+        directory = config['directory']
+        last_commit = config.get('commit')
+        results = parse_markdown_files(directory, last_commit, config_path)
         print(f"\nParsed {len(results)} files:")
         for var_name, content in results.items():
             print(f"  {var_name}: {len(content)} characters")

@@ -44,7 +44,8 @@ The tooling to generate AI summaries for the docs has the following components.
 ```
 {
   "directory": "example-docs/docs/tutorial-basics/",
-  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856"
+  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
+  "output_file": "example-docs/static/js/summaries.js"
 }
 ```
 
@@ -60,10 +61,7 @@ If no changes are detected, the config file remains the same.
 docdigest
 
 # Specify custom config
-docdigest --config my_config.json
-
-# Custom output file
-docdigest --config docdigest_config.json --output static/js/summaries.js
+docdigest --config docdigest_config.json
 ```
 
 ## Package structure

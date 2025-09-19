@@ -1,3 +1,4 @@
 {
-  "directory": "example-docs/docs/tutorial-basics/"
+  "directory": "example-docs/docs/tutorial-basics/",
+  "output_file": "example-docs/static/js/summaries.js"
 }
