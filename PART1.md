@@ -1,10 +1,10 @@
 ## Markdown parsing
 
 ### Goal
-Use the `mrkdwn_analysis` Python module to parse the Markdown docs and store each file’s content as a string.
+Parse the Markdown docs and store each file’s content as a string.
 
 ### Tools
-pip library: markdown-analysis 
+pip library: [markdown-analysis](https://pypi.org/project/markdown-analysis/)
 
 This module can parse elements of a Markdown file, such as headers, lists, and images.
 
@@ -35,7 +35,7 @@ paragraphs = analyzer.identify_paragraphs()
 * Read from a commit hash and only parse files that have been changed since that. Store the current commit hash for future runs.
 
 
-* Read a directory location (don’t hard-code to the lumi folder)
+* Read a directory location (don’t hard-code to any folder)
 * Use a JSON configuration file to read both the directory location and the commit hash. That way we have version control over the variables and create other configuration files for other use cases.
 For example, 
 

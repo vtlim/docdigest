@@ -58,7 +58,7 @@ def get_current_commit_hash() -> str:
         )
         return result.stdout.strip()
     except subprocess.CalledProcessError:
-        raise RuntimeError("Failed to get current git commit hash")
+        raise RuntimeError("🚨 Failed to get current git commit hash")
 
 
 def get_changed_files(directory: str, since_commit: Optional[str] = None) -> List[str]:
@@ -103,7 +103,7 @@ def get_changed_files(directory: str, since_commit: Optional[str] = None) -> Lis
         return markdown_files
 
     except subprocess.CalledProcessError:
-        raise RuntimeError(f"Failed to get changed files since commit {since_commit}")
+        raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
 
 
 def get_files(config_path: str) -> List[str]:
@@ -198,7 +198,7 @@ def parse_doc(filepath: str) -> str:
         return full_content
 
     except Exception as e:
-        raise RuntimeError(f"Failed to parse document {filepath}: {e}")
+        raise RuntimeError(f"{e}")
 
 
 def parse_markdown_files(config_path: str) -> Dict[str, str]:
@@ -236,7 +236,7 @@ def parse_markdown_files(config_path: str) -> Dict[str, str]:
             print(f"Parsed: {filepath} -> {variable_name}")
 
         except Exception as e:
-            print(f"Error parsing {filepath}: {e}")
+            print(f"🚨 Error parsing {filepath} -- {e}")
             continue
 
     # Update config with current commit hash for next run

@@ -14,7 +14,7 @@ def main():
 
     try:
         # Run the full pipeline
-        print("Parsing documentation...")
+        print("🔍 Parsing documentation...")
         parsed_docs = parse_markdown_files(args.config)
         print(f"Found {len(parsed_docs)} changed files")
 
