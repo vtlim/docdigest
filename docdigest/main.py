@@ -3,11 +3,14 @@ import sys
 import argparse
 from .config import load_config
 from .parse_docs import parse_markdown_files
+from .summarize import generate_summaries
 
 def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
     parser.add_argument('--config', default='docdigest_config.json',
                        help='Path to config file')
+    parser.add_argument('--model', default='debug', choices=['debug', 'claude'],
+                       help='Model to use for summarization')
 
     args = parser.parse_args()
 
@@ -21,9 +24,9 @@ def main():
         # Run the full pipeline
         print("📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(
-            directory = config['directory']  # required field, will raise KeyError if missing
-            last_commit = config.get('commit')  # optional field, may not exist on first run
-            output_file = config.get('output_file', 'summaries.js')  # optional with default
+            directory=config['directory'],
+            last_commit=config.get('commit'),
+            config_path=args.config
         )
         print(f"Found {len(parsed_docs)} changed files")
 
@@ -31,10 +34,13 @@ def main():
             print("No changes detected. Exiting.")
             return
 
-        print(f"Output will be written to: {output_file}")
+        print(f"🤖 Generating summaries using {args.model} model...")
+        generate_summaries(
+            parsed_docs=parsed_docs,
+            model=args.model,
+            output_file=output_file
+        )
 
-        # TODO: Add summarization step (part 2)
-        # TODO: Add JS file generation step (part 3)
         # TODO: Add git commit step (part 4)
 
         print("Pipeline completed successfully!")
