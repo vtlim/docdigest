@@ -5,9 +5,18 @@ sidebar_position: 6
 import {congratulations} from "@site/static/js/summaries.js"
 
 
-This is the summary: {congratulations}.
+<details open>
+<summary>Summary</summary>
 
+{congratulations}
 
+<br/><br/>
+<span className="small-font">
+This summary was generated using AI.
+Check important info for mistakes.
+</span>
+
+</details>
 
 # Congratulations!
 

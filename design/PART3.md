@@ -1,22 +1,39 @@
-### 3. Summary imports
-Plan
- Store all summaries as individual variables in a .js file. Import the appropriate variable in the Markdown docs file.
+## 3. Summary imports
 
-Modeled after version.js and how it’s used
+### Goal
+
+With each summary as an individual variable in a .js file, import the corresponding variable in the Markdown doc.
+
+### Requirements
+
+* For each output summary, ensure that the corresponding file imports the content from the `summaries.js` file.
+* Following the import, create an expander object that calls the variable to display.
+* Ensure that the import and expander are only present a single time at the top of the doc and after the docs front matter (enclosed by three dashes).
+* Ensure that if a file doesn't have a summary, it doesn't have an import or expander. Remove it if it's already there.
 
 
+Example:
 
-import {DRUIDVERSION, IMPLYVERSION, imply_agent} from "@site/static/js/versions.js"
- 
-End of each expander to have This content was generated using AI. Check important information for mistakes.
+```
+---
+id: congratulations
+title: Congratulations
+---
+
+import {congratulations} from "@site/static/js/summaries.js"
 
 
-Summary placement
+<details open>
+<summary>Summary</summary>
 
-Top of each doc as an expander that’s default open
+{congratulations}
 
-Landing page for a section (e.g., send events)
+<br/><br/>
+<span className="small-font">
+This summary was generated using AI.
+Check important info for mistakes.
+</span>
 
-Google preview description
+</details>
+```
 
-New content announcements (changelog)
