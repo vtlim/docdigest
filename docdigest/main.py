@@ -24,9 +24,9 @@ def main():
         # Run the full pipeline
         print("📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(
-            directory=config['directory'],
-            last_commit=config.get('commit'),
-            config_path=args.config
+            config['directory'],  # required field, will raise KeyError if missing
+            config.get('commit'),  # optional field, may not exist on first run
+            args.config
         )
         print(f"Found {len(parsed_docs)} changed files")
 
@@ -35,7 +35,7 @@ def main():
             return
 
         print(f"🤖 Generating summaries using {args.model} model...")
-        generate_summaries(
+        summaries = generate_summaries(
             parsed_docs=parsed_docs,
             model=args.model,
             output_file=output_file

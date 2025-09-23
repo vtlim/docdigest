@@ -111,7 +111,7 @@ def store_results(content: str, output_file: str) -> None:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
 
-def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str) -> None:
+def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
 
@@ -119,10 +119,13 @@ def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str
         parsed_docs: Dictionary mapping variable names to document content
         model: Model to use for summarization ("debug" or "claude")
         output_file: Path to output JavaScript file
+
+    Returns:
+        Dictionary mapping variable names to their summaries
     """
     if not parsed_docs:
         print("No documents to summarize.")
-        return
+        return {}
 
     summaries = {}
 
@@ -145,6 +148,8 @@ def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str
     else:
         print("🚨 No summaries generated due to errors")
 
+    return summaries
+
 
 if __name__ == "__main__":
     # Example usage
@@ -153,4 +158,6 @@ if __name__ == "__main__":
         "api_reference": "The API provides endpoints for managing resources..."
     }
 
-    generate_summaries(sample_docs, "debug", "test_summaries.js")
+    summaries = generate_summaries(sample_docs, "debug", "test_summaries.js")
+    print(f"Returned summaries: {summaries}")
+    # File also written to test_summaries.js for Docusaurus
