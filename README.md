@@ -5,22 +5,43 @@ The Python package `docdigest` creates AI summaries for Markdown-based documenta
 The summarization is AI-powered and user-controlled.
 It's intended for automation with CI tools but can also be run manually.
 
-The package is designed to run with the static site generator, Docusaurus, and
-can also be used with other JavaScript-based sites.
-The package can be adapted to work with other doc set configurations by changing how summaries are stored and imported.
-
-`docdigest` assumes version control in a GitHub repository.
-It detects files changed from a reference commit hash and only generates summaries for those files.
-The version control is also important for the updated summaries.
-Each updated summary is committed as a separate line change so that any change can easily be reverted back.
-
-The input is a collection of Markdown files and a commit hash,
-and the output is a single file that contains a summary for each file, with one summary per line.
-The Markdown files themselves will only have a one-time change to import the summary using a variable.
-With all future iterations, only the summary file changes.
-
 From the perspective of a docs reader, the top of each page will show an expander
-that summarizes the article. The content of the expander comes from the summary file.
+that summarizes the article.
+
+## Why
+
+Oftentimes, the way to get acquainted with a new doc is to do some combination of the following:
+* Scan the title
+* View the internal table of contents
+* Read the introduction
+* See where the doc is in context of other docs
+
+What if there was a better way to help readers get to the point?
+That's where top-level summaries come in.
+These are short blurbs for users to quickly scan before diving into the content.
+A summary can help users confirm they're in the right place.
+By knowing what lies ahead, it can also help reduce cognitive load ("tell them what you're going to tell them").
+
+Why not refer to a doc introduction or its meta description?
+
+Introductions can be inconsistent across pages, varying in length from 1-2 sentences or several paragraphs.
+The introductions can vary in detail, tone, or relation to the doc.
+Introductions can range in purpose: "how to use," "what this covers," or technical background.
+They can also become outdated as content evolves.
+
+Meta descriptions are intended for use on search engine result pages.
+They should be concise and contain target keywords to capture the relevant readers.
+They're usually 130-140 characters, or 1-2 sentences long, which can be too short for complex topics.
+Additionally, meta descriptions aren't present in the docs themselves,
+although one could create tooling to display them.
+
+Generated summaries have the following advantages over intros and meta descriptions:
+* Consistent in detail, length, tone, and format
+* Adapts to different content types, such as tutorial or reference
+* Long enough to provide a deeper overview than meta descriptions
+* Current with the doc contents
+* Standard placement across all topics
+
 
 ## Prerequisites
 
@@ -28,14 +49,18 @@ that summarizes the article. The content of the expander comes from the summary 
 * Docusaurus
 * Github
 
-## Description of components
+### Docusaurus
 
-The tooling to generate AI summaries for the docs has the following components.
+The package is designed to run with the static site generator, Docusaurus, and
+can also be used with other JavaScript-based sites.
+The package can be adapted to work with other doc set configurations by changing how summaries are stored and imported.
 
-1. [Markdown parsing](./design/PART1.md)
-1. LLM text generation
-1. Summary imports
-1. Commit changes
+### GitHub
+
+`docdigest` assumes version control in a GitHub repository.
+It detects files changed from a reference commit hash and only generates summaries for those files.
+The version control is also important for the updated summaries.
+Each updated summary is committed as a separate line change so that any change can easily be reverted back.
 
 ## How to use
 
@@ -62,19 +87,41 @@ docdigest
 
 # Specify custom config
 docdigest --config docdigest_config.json
+
+# Specify summarization model
+docdigest --model [claude,debug]
 ```
+
+## Operational details
+
+The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
+The output is a JavaScript file that contains the summary for each file.
+
+The Markdown files themselves will have a one-time change to import the summary using a variable.
+With all future iterations, when the summarizations are successful, only the summary file changes.
+If there is an error generating a summary, the output file will exclude it,
+and and the Markdown file will have the summary expander removed.
+
+## Description of components
+
+The tooling to generate AI summaries for the docs has the following components.
+
+1. [Markdown parsing](./design/PART1.md)
+1. LLM text generation
+1. Summary imports
+1. Commit changes
 
 ## Package structure
 
 ```
 docdigest
 ├── __init__.py
-├── config.py                      # used by parts 1-2
-├── commitify.py                   # part 4
-├── main.py                        # centralized call for package
-├── import_summaries.py            # part 3
-├── parse_docs.py                  # part 1
-└── summarize.py                   # part 2
+├── commitify.py
+├── config.py
+├── import_js.py
+├── main.py
+├── parse_docs.py
+└── summarize.py
 ```
 
 ## Local development
