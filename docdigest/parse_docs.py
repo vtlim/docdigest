@@ -5,6 +5,7 @@ Uses mrkdwn_analysis to extract content from Markdown files and tracks changes v
 
 import os
 import subprocess
+import fnmatch
 from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
@@ -30,26 +31,17 @@ def get_current_commit_hash() -> str:
         raise RuntimeError("🚨 Failed to get current git commit hash")
 
 
-def get_changed_files(directory: str, since_commit: Optional[str] = None) -> List[str]:
+def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
     """
-    Get list of changed Markdown files in directory since specified commit.
+    Get list of changed Markdown files from git since specified commit.
 
     Args:
         directory: Directory to scan for files
-        since_commit: Git commit hash to compare against (None for all files)
+        since_commit: Git commit hash to compare against
 
     Returns:
-        List of file paths that have changed
+        List of changed markdown file paths (no exclusions applied)
     """
-    if since_commit is None:
-        # Return all markdown files if no commit specified
-        markdown_files = []
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                if file.endswith('.md'):
-                    markdown_files.append(os.path.join(root, file))
-        return markdown_files
-
     try:
         # Get changed files since the specified commit
         result = subprocess.run(
@@ -75,21 +67,122 @@ def get_changed_files(directory: str, since_commit: Optional[str] = None) -> Lis
         raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
 
 
-def get_files(directory: str, last_commit: Optional[str]) -> List[str]:
+def get_all_markdown_files(directory: str) -> List[str]:
     """
-    Get list of changed docs from a specified directory based on the commit difference.
+    Get all Markdown files in directory recursively.
+
+    Args:
+        directory: Directory to scan for files
+
+    Returns:
+        List of all markdown file paths (no exclusions applied)
+    """
+    markdown_files = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.md'):
+                markdown_files.append(os.path.join(root, file))
+    return markdown_files
+
+
+def should_exclude_file(filepath: str, exclude_config: Dict, base_directory: str) -> bool:
+    """
+    Check if a file should be excluded from processing based on exclude configuration.
+    All exclude patterns are relative to the base_directory.
+
+    Args:
+        filepath: Full path to the file
+        exclude_config: Exclude configuration dictionary
+        base_directory: Base directory to make paths relative to
+
+    Returns:
+        True if file should be excluded, False otherwise
+    """
+    if not exclude_config:
+        return False
+
+    # Get relative path from base directory
+    try:
+        relative_path = os.path.relpath(filepath, base_directory)
+    except ValueError:
+        # Handle case where paths are on different drives (Windows)
+        return False
+
+    # Check exact file matches (relative to base directory)
+    exact_files = exclude_config.get('files', [])
+    if relative_path in exact_files:
+        return True
+
+    # Check pattern matches (relative to base directory)
+    patterns = exclude_config.get('patterns', [])
+    for pattern in patterns:
+        if fnmatch.fnmatch(relative_path, pattern):
+            return True
+
+    # Check directory exclusions (relative to base directory)
+    directories = exclude_config.get('directories', [])
+    for directory in directories:
+        # Normalize directory path and ensure it ends with separator
+        norm_dir = os.path.normpath(directory)
+        if not norm_dir.endswith(os.sep):
+            norm_dir += os.sep
+
+        # Check if relative path starts with the excluded directory
+        if relative_path.startswith(norm_dir) or relative_path + os.sep == norm_dir:
+            return True
+
+    return False
+
+
+def filter_excluded_files(files: List[str], exclude_config: Dict, base_directory: str) -> List[str]:
+    """
+    Filter out excluded files from a list based on exclude configuration.
+
+    Args:
+        files: List of file paths to filter
+        exclude_config: Exclude configuration dictionary
+        base_directory: Base directory for relative path calculations
+
+    Returns:
+        List of files with excluded ones removed
+    """
+    if not exclude_config:
+        return files
+
+    filtered_files = []
+    for filepath in files:
+        if not should_exclude_file(filepath, exclude_config, base_directory):
+            filtered_files.append(filepath)
+
+    return filtered_files
+
+
+def get_files_to_process(directory: str, last_commit: Optional[str], exclude_config: Dict = None) -> List[str]:
+    """
+    Get list of markdown files to process based on git changes and exclusion rules.
 
     Args:
         directory: Directory to scan for files
         last_commit: Git commit hash to compare against (None for all files)
+        exclude_config: Configuration dictionary for files to exclude
 
     Returns:
-        List of file paths that have changed since the last recorded commit
+        List of file paths to process
     """
-    if not os.path.exists(directory):
-        raise FileNotFoundError(f"Directory not found: {directory}")
+    exclude_config = exclude_config or {}
 
-    return get_changed_files(directory, last_commit)
+    # Step 1: Get files based on git status
+    if last_commit is None:
+        # Get all markdown files if no commit specified
+        all_files = get_all_markdown_files(directory)
+    else:
+        # Get only changed files since commit
+        all_files = get_git_changed_files(directory, last_commit)
+
+    # Step 2: Apply exclusion filters
+    filtered_files = filter_excluded_files(all_files, exclude_config, directory)
+
+    return filtered_files
 
 
 def filename_to_variable_name(filepath: str, base_directory: str) -> str:
@@ -183,17 +276,21 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
             "api_reference": "The API provides endpoints for..."
         }
     """
-    # Get list of changed files
-    changed_files = get_files(directory, last_commit)
+    # Load config to get exclude configuration
+    config = load_config(config_path)
+    exclude_config = config.get('exclude', {})
 
-    if not changed_files:
-        print("No changed Markdown files found.")
+    # Get list of files to process (git changes + exclusions)
+    files_to_process = get_files_to_process(directory, last_commit, exclude_config)
+
+    if not files_to_process:
+        print("No Markdown files found to process.")
         return {}
 
     # Parse each file and build content dictionary
     content_dict = {}
 
-    for filepath in changed_files:
+    for filepath in files_to_process:
         try:
             variable_name = filename_to_variable_name(filepath, directory)
             content = parse_doc(filepath)
@@ -205,7 +302,6 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
             continue
 
     # Update config with current commit hash for next run
-    config = load_config(config_path)
     current_commit = get_current_commit_hash()
     config['commit'] = current_commit
     save_config(config_path, config)
