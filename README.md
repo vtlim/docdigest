@@ -66,18 +66,45 @@ Each updated summary is committed as a separate line change so that any change c
 
 ### Input configuration file
 
-```
+Simplest configuration:
+
+```json
 {
-  "directory": "example-docs/docs/tutorial-basics/",
-  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
+  "directory": "example-docs/docs/",
   "output_file": "example-docs/static/js/summaries.js"
 }
 ```
 
 For a first time run, omit `commit` from the configuration to process all docs.
-
 Subsequent iterations of calling `docdigest` updates the commit hash to the latest version.
 If no changes are detected, the config file remains the same.
+
+More advanced configuration:
+
+```json
+{
+  "directory": "example-docs/docs/",
+  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
+  "output_file": "example-docs/static/js/summaries.js",
+  "exclude": {
+    "files": ["tutorial-basics/create-a-document.md"],
+  }
+}
+```
+
+For files to avoid summarizing, list them in the `exclude` field.
+You can exclude files by regex pattern, filename, and directory name.
+The exclude patterns are relative to the provided directory.
+
+Additional exclude examples:
+
+```json
+  "exclude": {
+    "patterns": ["*/README.md", "**/CHANGELOG.md", "blog/**/*.md"],
+    "files": ["index.md", "404.md", "welcome.md"],
+    "directories": ["blog/", "archive/", "temp/"]
+  }
+```
 
 ### Commands to run
 

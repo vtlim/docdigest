@@ -1,4 +1,7 @@
 {
-  "directory": "example-docs/docs/tutorial-basics/",
-  "output_file": "example-docs/static/js/summaries.js"
+  "directory": "example-docs/docs/",
+  "output_file": "example-docs/static/js/summaries.js",
+  "exclude": {
+    "files": ["tutorial-basics/create-a-document.md"],
+  }
 }
