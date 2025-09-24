@@ -53,7 +53,7 @@ The summary will be displayed in an expandable section at the top of the documen
 - For the provided content, summarize the main purpose and key information
 - Focus on what the reader will learn or accomplish
 - Write it for an audience of developers or technical users
-- Use plain text between 30-45 words and no special formatting
+- Use plain text between 25-40 words and no special formatting
 - Use clear, accessible language that matches the original tone
 - Avoid unnecessary jargon unless it's essential to understanding
 - Make the summary standalone - someone should understand the page's value without reading the full content
