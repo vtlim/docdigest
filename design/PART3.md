@@ -4,6 +4,11 @@
 
 With each summary as an individual variable in a .js file, import the corresponding variable in the Markdown doc.
 
+### Assumptions
+
+The JavaScript file must be located in the `static/js` folder of the Docusaurus site (wherever you call `npm run start` or `docusaurus start` or `yarn start`).
+That may be the root of the Docusaurus directory or in the `website` subdirectory.
+
 ### Requirements
 
 * For each output summary, ensure that the corresponding file imports the content from the `summaries.js` file.
@@ -13,8 +18,9 @@ With each summary as an individual variable in a .js file, import the correspond
 
 | Current State | Should Have | Action |
 |---------------|-------------|---------|
-| Has component | Has summary | ✅ No changes |
-| Has component | No summary | 🗑️ Remove component |
+| Has component with **same variable** | Has summary | ✅ No changes |
+| Has component with **different variable** | Has summary | 🔄 Remove old, add new |
+| Has component with **any variable** | No summary | ⛔ Remove component |
 | No component | Has summary | ➕ Add component |
 | No component | No summary | ✅ No changes |
 
@@ -43,3 +49,11 @@ Check important info for mistakes.
 </details>
 ```
 
+### How to undo all imports
+
+Use the `exclude` field in the `docdigest` configuration to exclude all files except one.
+(If it detects no files changed or excluded, the program stops all processing.)
+
+When you exclude the files, the `imports.py` stage removes summaries since those files are noted for exclusion.
+
+Then run the program again and update `exclude` to exclude that last file, or else just remove the component manually.
