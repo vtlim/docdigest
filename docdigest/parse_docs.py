@@ -97,6 +97,35 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
     return filtered_files
 
 
+def filter_meaningful_content(paragraphs: List[str]) -> List[str]:
+    """
+    Filter out technical noise and keep meaningful content for summarization.
+
+    Args:
+        paragraphs: List of paragraph strings from markdown analysis
+
+    Returns:
+        Filtered list of meaningful paragraph strings
+    """
+    filtered = []
+    for paragraph in paragraphs:
+        # Skip import statements
+        if paragraph.startswith('import ') and 'from' in paragraph:
+            continue
+        # Skip JSX variable references
+        if paragraph.startswith('{') and paragraph.endswith('}'):
+            continue
+        # Skip HTML tags
+        if paragraph.startswith('<') and paragraph.endswith('>'):
+            continue
+        # Skip very short fragments
+        if len(paragraph.split()) < 3:
+            continue
+
+        filtered.append(paragraph)
+    return filtered
+
+
 def parse_doc(filepath: str) -> str:
     """
     Parse content from an individual Markdown document.
@@ -109,27 +138,18 @@ def parse_doc(filepath: str) -> str:
     """
     try:
         analyzer = MarkdownAnalyzer(filepath)
-        paragraphs = analyzer.identify_paragraphs()
+        result = analyzer.identify_paragraphs()
 
-        # Convert paragraphs to a single string
-        # Assuming paragraphs is a list of paragraph objects with text content
-        content_parts = []
-        for paragraph in paragraphs:
-            # Handle different possible paragraph object structures
-            if hasattr(paragraph, 'text'):
-                content_parts.append(paragraph.text)
-            elif hasattr(paragraph, 'content'):
-                content_parts.append(paragraph.content)
-            elif isinstance(paragraph, str):
-                content_parts.append(paragraph)
-            else:
-                # Try to convert to string as fallback
-                content_parts.append(str(paragraph))
+        # Extract the list of paragraph strings from the "Paragraph" key
+        paragraphs = result.get("Paragraph", [])
 
-        # Join all content with spaces and clean up whitespace
-        full_content = ' '.join(content_parts)
+        # Filter out technical noise and keep meaningful content
+        meaningful_paragraphs = filter_meaningful_content(paragraphs)
 
-        # Remove excessive whitespace and normalize
+        # Join all meaningful paragraph strings
+        full_content = ' '.join(meaningful_paragraphs)
+
+        # Clean up whitespace
         import re
         full_content = re.sub(r'\s+', ' ', full_content).strip()
 
