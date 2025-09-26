@@ -133,10 +133,12 @@ and and the Markdown file will have the summary expander removed.
 
 The tooling to generate AI summaries for the docs has the following components.
 
-1. [Markdown parsing](./design/PART1.md)
-1. LLM text generation
-1. Summary imports
-1. Commit changes
+1. 📖 Parse documentation → parsed_docs dict
+2. 🤖 Generate summaries → summaries dict + summaries.js file  
+3. 📝 Update markdown imports → modify .md files with components
+4. 🔄 Git commit
+
+For details, see the [design docs](./design/).
 
 ## Package structure
 
