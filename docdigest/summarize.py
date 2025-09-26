@@ -16,14 +16,18 @@ Summaries for each topic, matched by filename
 """
 
 
-def summarize_debug() -> str:
+def summarize_debug(content: str) -> str:
     """
-    Debug summarization that returns a placeholder string.
+    Debug summarization that returns a placeholder string with word count.
+
+    Args:
+        content: Text content to analyze for word count
 
     Returns:
-        Debug placeholder string
+        Debug placeholder string with word count
     """
-    return "Dummy value for debugging"
+    word_count = len(content.split()) if content else 0
+    return f"Summary in debug mode. Input word count: {word_count}"
 
 
 def summarize_claude(content: str) -> str:
@@ -55,7 +59,7 @@ def summarize(model: str, content: str = None) -> str:
         ValueError: If unknown model specified
     """
     if model == "debug":
-        return summarize_debug()
+        return summarize_debug(content)
     elif model == "claude":
         return summarize_claude(content)
     else:
