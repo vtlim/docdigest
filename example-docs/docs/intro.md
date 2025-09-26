@@ -2,6 +2,21 @@
 sidebar_position: 1
 ---
 
+import {intro} from "@site/static/js/summaries.js"
+
+<details open>
+<summary>Summary</summary>
+
+{intro}
+
+<br/><br/>
+<span className="small-font">
+This summary was generated using AI.
+Check important info for mistakes.
+</span>
+
+</details>
+
 # Tutorial Intro
 
 Let's discover **Docusaurus in less than 5 minutes**.

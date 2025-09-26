@@ -2,8 +2,6 @@
 sidebar_position: 3
 ---
 
-import {create_a_blog_post} from "@site/static/js/summaries.js"
-
 This is the summary: {create_a_blog_post}.
 
 # Create a Blog Post
