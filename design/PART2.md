@@ -45,6 +45,8 @@ Do not explore the prompt, evaluation, or additional considerations below.
 
 ### Prompt
 
+#### Basic content only
+
 ```
 You are a technical documentation summarizer. Your task is to create concise, informative summaries for documentation pages.
 The summary will be displayed in an expandable section at the top of the documentation pages.
@@ -62,6 +64,19 @@ The summary will be displayed in an expandable section at the top of the documen
 [DOCUMENT_CONTENT_HERE]
 
 Provide only the summary text, nothing else.
+```
+
+#### Modification with headers
+
+```
+SUMMARIZATION_PROMPT = """Create a concise 1-2 sentence summary.
+
+Document headers (main topics): {headers}
+Document content: {content}
+
+Focus on the main topics indicated by the headers while summarizing the content.
+
+Summary:"""
 ```
 
 ### Evaluation 
