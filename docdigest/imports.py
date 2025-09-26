@@ -128,7 +128,7 @@ Check important info for mistakes.
     return component
 
 
-def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, import_path: str) -> bool:
+def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, import_path: str) -> str:
     """
     Process a single markdown file to add/remove summary components.
 
@@ -139,7 +139,7 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
         import_path: Docusaurus import path for summaries
 
     Returns:
-        True if file was modified successfully, False if skipped due to error
+        Action taken: "added", "removed", "unchanged", or "error"
     """
     try:
         # Read file content
@@ -151,7 +151,7 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
 
         if not frontmatter:
             print(f"🚨 No frontmatter found in {filepath}, skipping")
-            return False
+            return "error"
 
         # Check current state
         currently_has_component = has_existing_summary_component(after_frontmatter, variable_name)
@@ -162,7 +162,7 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
 
         if not needs_changes:
             print(f"No changes needed: {filepath}")
-            return True
+            return "unchanged"
 
         # Make changes
         if needs_component:
@@ -171,22 +171,24 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
             summary_component = create_summary_component(variable_name, import_path)
             new_content = frontmatter + summary_component + cleaned_content
             action = "➕ Added import"
+            result = "added"
         else:
             # Remove existing component
             cleaned_content = remove_existing_summary_components(after_frontmatter)
             new_content = frontmatter + cleaned_content
             action = "⛔ Removed import"
+            result = "removed"
 
         # Write the file
         with open(filepath, 'w', encoding='utf-8') as file:
             file.write(new_content)
 
         print(f"{action}: {filepath}")
-        return True
+        return result
 
     except Exception as e:
         print(f"🚨 Error processing {filepath}: {e}")
-        return False
+        return "error"
 
 
 def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None:
@@ -216,7 +218,9 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
         return
 
     processed_count = 0
-    modified_count = 0
+    added_count = 0
+    removed_count = 0
+    unchanged_count = 0
 
     # Process each markdown file
     for filepath in markdown_files:
@@ -229,17 +233,25 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
         should_have_summary = not is_excluded and has_summary_data
 
         # Process the file
-        success = process_markdown_file(filepath, variable_name, should_have_summary, import_path)
+        result = process_markdown_file(filepath, variable_name, should_have_summary, import_path)
 
-        if success:
+        # Update counters based on result
+        if result == "added":
             processed_count += 1
-            if should_have_summary:
-                modified_count += 1
+            added_count += 1
+        elif result == "removed":
+            processed_count += 1
+            removed_count += 1
+        elif result == "unchanged":
+            processed_count += 1
+            unchanged_count += 1
+        # result == "error" doesn't increment processed_count
 
     print(f"Import processing complete:")
     print(f"  • Files processed: {processed_count}/{len(markdown_files)}")
-    print(f"  • Files with summaries added: {modified_count}")
-    print(f"  • Files with summaries removed: {processed_count - modified_count}")
+    print(f"  • Files with summaries added: {added_count}")
+    print(f"  • Files with summaries removed: {removed_count}")
+    print(f"  • Files unchanged: {unchanged_count}")
 
 
 if __name__ == "__main__":
