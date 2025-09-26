@@ -2,7 +2,7 @@
 Summaries for each topic, matched by filename
 */
 
-const intro = "Dummy value for debugging";
+const intro = "Summary in debug mode. Input word count: 1";
 
 
 module.exports = {

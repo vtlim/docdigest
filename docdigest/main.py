@@ -47,7 +47,7 @@ def main():
 
         # TODO: Add git commit step (part 4)
 
-        print("Pipeline completed successfully!")
+        print("\nPipeline completed successfully!")
 
     except Exception as e:
         print(f"Error: {e}")
