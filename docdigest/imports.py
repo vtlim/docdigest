@@ -161,7 +161,7 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
         needs_changes = currently_has_component != needs_component
 
         if not needs_changes:
-            print(f"⚪ No changes needed: {filepath}")
+            print(f"No changes needed: {filepath}")
             return True
 
         # Make changes
@@ -236,7 +236,7 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
             if should_have_summary:
                 modified_count += 1
 
-    print(f"📊 Import processing complete:")
+    print(f"Import processing complete:")
     print(f"  • Files processed: {processed_count}/{len(markdown_files)}")
     print(f"  • Files with summaries added: {modified_count}")
     print(f"  • Files with summaries removed: {processed_count - modified_count}")

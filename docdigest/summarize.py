@@ -106,7 +106,7 @@ def store_results(content: str, output_file: str) -> None:
     try:
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(content)
-        print(f"✅ Summaries written to: {output_file}")
+        print(f"Summaries written to: {output_file}")
     except Exception as e:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
