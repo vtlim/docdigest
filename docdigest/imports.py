@@ -12,18 +12,21 @@ from .config import load_config
 
 def convert_output_file_to_import_path(output_file: str) -> str:
     """
-    Convert output file path to Docusaurus import path.
+    Convert output file path to Docusaurus import path using the filename from output_file.
 
     Args:
-        output_file: Path like "static/js/summaries.js"
+        output_file: Any file path - only the filename will be used
 
     Returns:
-        Docusaurus import path like "@site/static/js/summaries.js"
+        Docusaurus import path like "@site/static/js/filename.js"
     """
-    # Ensure path starts with @site/
-    if not output_file.startswith("@site/"):
-        return f"@site/{output_file}"
-    return output_file
+    import os
+
+    # Extract just the filename from the output_file path
+    filename = os.path.basename(output_file)
+
+    # Always use @site/static/js/ prefix with the extracted filename
+    return f"@site/static/js/{filename}"
 
 
 def extract_frontmatter_and_content(file_content: str) -> tuple[str, str, str]:
@@ -107,7 +110,6 @@ def create_summary_component(variable_name: str, import_path: str) -> str:
         Formatted import and component string
     """
     component = f'''import {{{variable_name}}} from "{import_path}"
-
 
 <details open>
 <summary>Summary</summary>
@@ -206,14 +208,8 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
 
     print(f"Updating markdown imports to {import_path})...")
 
-    # Get all markdown files in directory
-    all_markdown_files = get_all_markdown_files(directory)
-
-    # Filter out excluded files
-    markdown_files = []
-    for filepath in all_markdown_files:
-        if not should_exclude_file(filepath, exclude_config, directory):
-            markdown_files.append(filepath)
+    # Get all markdown files in directory (don't filter excluded files)
+    markdown_files = get_all_markdown_files(directory)
 
     if not markdown_files:
         print("No markdown files found to process.")
@@ -227,15 +223,17 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
         # Get variable name for this file
         variable_name = filename_to_variable_name(filepath, directory)
 
-        # Check if this file has a summary
-        has_summary = variable_name in summaries
+        # Check if this file should have a summary (not excluded AND has summary)
+        is_excluded = should_exclude_file(filepath, exclude_config, directory)
+        has_summary_data = variable_name in summaries
+        should_have_summary = not is_excluded and has_summary_data
 
         # Process the file
-        success = process_markdown_file(filepath, variable_name, has_summary, import_path)
+        success = process_markdown_file(filepath, variable_name, should_have_summary, import_path)
 
         if success:
             processed_count += 1
-            if has_summary:
+            if should_have_summary:
                 modified_count += 1
 
     print(f"📊 Import processing complete:")
