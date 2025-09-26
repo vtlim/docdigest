@@ -4,6 +4,7 @@ import argparse
 from .config import load_config
 from .parse_docs import parse_markdown_files
 from .summarize import generate_summaries
+from .imports import update_markdown_imports
 
 def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
@@ -22,7 +23,7 @@ def main():
         output_file = config.get('output_file', 'summaries.js')
 
         # Run the full pipeline
-        print("📖 Parsing documentation...")
+        print("\n📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(
             config['directory'],  # required field, will raise KeyError if missing
             config.get('commit'),  # optional field, may not exist on first run
@@ -34,12 +35,15 @@ def main():
             print("No changes detected. Exiting.")
             return
 
-        print(f"🤖 Generating summaries using {args.model} model...")
+        print(f"\n🤖 Generating summaries using {args.model} model...")
         summaries = generate_summaries(
             parsed_docs=parsed_docs,
             model=args.model,
             output_file=output_file
         )
+
+        print("\n📝 Updating markdown file imports...")
+        update_markdown_imports(summaries, args.config)
 
         # TODO: Add git commit step (part 4)
 
