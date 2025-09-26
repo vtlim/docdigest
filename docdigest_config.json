@@ -3,7 +3,7 @@
   "output_file": "example-docs/static/js/summaries.js",
   "exclude": {
     "files": [
-      "tutorial-basics/create-a-document.md"
+      "intro.md"
     ]
   }
 }
