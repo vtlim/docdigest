@@ -3,10 +3,17 @@ AI summarization functionality for docdigest.
 Generates short text summaries for documentation content and formats them as JavaScript modules.
 """
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 # Global prompt for summarization
-SUMMARIZATION_PROMPT = ""
+SUMMARIZATION_PROMPT = """Create a concise 1-2 sentence summary.
+
+Document headers (main topics): {headers}
+Document content: {content}
+
+Focus on the main topics indicated by the headers while summarizing the content.
+
+Summary:"""
 
 # JavaScript module header comment
 JS_MODULE_HEADER = """/*
@@ -16,41 +23,46 @@ Summaries for each topic, matched by filename
 """
 
 
-def summarize_debug(content: str) -> str:
+def summarize_debug(parsed_doc: Dict[str, List[str]]) -> str:
     """
-    Debug summarization that returns a placeholder string with word count.
+    Debug summarization that returns a placeholder string with structure info.
 
     Args:
-        content: Text content to analyze for word count
+        parsed_doc: Dictionary with "headers" and "paragraphs" lists
 
     Returns:
-        Debug placeholder string with word count
+        Debug placeholder string with header and word counts
     """
-    word_count = len(content.split()) if content else 0
-    return f"Summary in debug mode. Input word count: {word_count}"
+    header_count = len(parsed_doc.get("headers", []))
+    word_count = sum(len(p.split()) for p in parsed_doc.get("paragraphs", []))
+    return f"Summary in debug mode. Headers: {header_count}, Word count: {word_count}"
 
 
-def summarize_claude(content: str) -> str:
+def summarize_claude(parsed_doc: Dict[str, List[str]]) -> str:
     """
-    Claude summarization (no-op for now).
+    Claude summarization with header-aware prompting.
 
     Args:
-        content: Text content to summarize
+        parsed_doc: Dictionary with "headers" and "paragraphs" lists
 
     Returns:
-        TODO placeholder string
+        Generated summary string
     """
-    # No-op for now
+    headers_text = ", ".join(parsed_doc.get("headers", []))
+    content_text = " ".join(parsed_doc.get("paragraphs", []))
+
+    # Use the global prompt template with header emphasis
+    # For now, return placeholder since Claude API integration not implemented
     return "TODO"
 
 
-def summarize(model: str, content: str = None) -> str:
+def summarize(model: str, parsed_doc: Dict[str, List[str]] = None) -> str:
     """
     Generate summary using specified model.
 
     Args:
         model: Model to use ("debug" or "claude")
-        content: Text content to summarize (only needed for claude)
+        parsed_doc: Dictionary with "headers" and "paragraphs" lists (needed for both models)
 
     Returns:
         Generated summary string
@@ -59,9 +71,9 @@ def summarize(model: str, content: str = None) -> str:
         ValueError: If unknown model specified
     """
     if model == "debug":
-        return summarize_debug(content)
+        return summarize_debug(parsed_doc)
     elif model == "claude":
-        return summarize_claude(content)
+        return summarize_claude(parsed_doc)
     else:
         raise ValueError(f"Unknown model: {model}")
 
@@ -115,12 +127,12 @@ def store_results(content: str, output_file: str) -> None:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
 
-def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str) -> Dict[str, str]:
+def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str, output_file: str) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
 
     Args:
-        parsed_docs: Dictionary mapping variable names to document content
+        parsed_docs: Dictionary mapping variable names to document structure
         model: Model to use for summarization ("debug" or "claude")
         output_file: Path to output JavaScript file
 
@@ -133,9 +145,9 @@ def generate_summaries(parsed_docs: Dict[str, str], model: str, output_file: str
 
     summaries = {}
 
-    for var_name, content in parsed_docs.items():
+    for var_name, parsed_doc in parsed_docs.items():
         try:
-            summary = summarize(model, content)
+            summary = summarize(model, parsed_doc)
             summaries[var_name] = summary
             print(f"Summarized: {var_name}")
 

@@ -126,7 +126,7 @@ def filter_meaningful_content(paragraphs: List[str]) -> List[str]:
     return filtered
 
 
-def parse_doc(filepath: str) -> str:
+def parse_doc(filepath: str) -> Dict[str, List[str]]:
     """
     Parse content from an individual Markdown document.
 
@@ -134,32 +134,38 @@ def parse_doc(filepath: str) -> str:
         filepath: Path to the markdown file
 
     Returns:
-        String containing all document content
+        Dictionary containing headers and paragraphs:
+        {
+            "headers": ["Python 3.11", "Performance Details"],
+            "paragraphs": ["Let's discover Docusaurus...", "Get started by creating..."]
+        }
     """
     try:
         analyzer = MarkdownAnalyzer(filepath)
-        result = analyzer.identify_paragraphs()
 
-        # Extract the list of paragraph strings from the "Paragraph" key
-        paragraphs = result.get("Paragraph", [])
+        # Get both paragraphs and headers
+        paragraphs_result = analyzer.identify_paragraphs()
+        headers_result = analyzer.identify_headers()
 
-        # Filter out technical noise and keep meaningful content
+        paragraphs = paragraphs_result.get("Paragraph", [])
+        headers_data = headers_result.get("Header", [])
+
+        # Extract header text
+        header_texts = [header["text"] for header in headers_data]
+
+        # Filter meaningful paragraphs
         meaningful_paragraphs = filter_meaningful_content(paragraphs)
 
-        # Join all meaningful paragraph strings
-        full_content = ' '.join(meaningful_paragraphs)
-
-        # Clean up whitespace
-        import re
-        full_content = re.sub(r'\s+', ' ', full_content).strip()
-
-        return full_content
+        return {
+            "headers": header_texts,
+            "paragraphs": meaningful_paragraphs
+        }
 
     except Exception as e:
         raise RuntimeError(f"{e}")
 
 
-def parse_markdown_files(directory: str, last_commit: Optional[str], config_path: str) -> Dict[str, str]:
+def parse_markdown_files(directory: str, last_commit: Optional[str], config_path: str) -> Dict[str, Dict[str, List[str]]]:
     """
     Parse all changed Markdown files and return content dictionary.
 
@@ -169,10 +175,16 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
         config_path: Path to the JSON configuration file (for saving updates)
 
     Returns:
-        Dictionary mapping variable names to document content
+        Dictionary mapping variable names to document structure:
         Example: {
-            "getting_started": "This guide covers the basics of...",
-            "api_reference": "The API provides endpoints for..."
+            "getting_started": {
+                "headers": ["Getting Started", "Installation"],
+                "paragraphs": ["This guide covers...", "First, install..."]
+            },
+            "api_reference": {
+                "headers": ["API Reference", "Authentication"],
+                "paragraphs": ["The API provides...", "To authenticate..."]
+            }
         }
     """
     # Load config to get exclude configuration
