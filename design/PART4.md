@@ -1,28 +1,13 @@
-### 4. Commit changes
+## 4. Commit changes
 
-From an existing summaries.js, compare a new summaries.js file. For each new or changed line, update the existing summaries.js file and commit this change in the PR.
+### Goal
 
-Main execution
-Import modules of the package for end-to-end execution
+Detect changes in `summaries.js` from a previously existing version.
+Separate each change as an individual commit. That way if we want to revert a change, we can just revert the commit.
 
-python main.py --config docs.json
+### Requirements
 
-
-
-from . import parse_docs
-from . import import_summaries
-from .summarize import claude
-changed_files = parse_docs.get_files(DIR_NAME, COMMIT_HASH)
-doc_contents = parse_docs.read_changes(changed_files)
-...
-Automation
-For the automation:
-
-Use GitHub Actions to generate/refresh doc summaries.
-
-Create a pull request of the changes for a writer to review.
-
-Run at what cadence Question Mark
-
-Separate each change as an individual commit. That way if we want to revert a change, we can just revert the commit(s).
-
+* Run a diff operation to detect individual line changes in `summaries.js` from a previously existing file.
+* For each new or changed line, create a separate `git add` and `git commit`.
+* Add a mode or flag to determine whether the program is called by a user or running in an automated workflow.
+If it's called by a user, prompt the user to check whether they're on the right branch and if they want to create a new one before doing the series of git commits.
