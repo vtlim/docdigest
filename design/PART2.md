@@ -9,6 +9,10 @@ In `summarize.py`, generate short text summaries for each file parsed in the pre
 
 ### Requirements
 
+Technical requirements that don't include the variable components of summarization.
+
+#### Input and output
+
 * Read in the dictionary of file IDs and contents from `parse_docs.py`
 * Create a summary for each entry in the dictionary
 * Write the output content which has a structure similar to the following:
@@ -29,21 +33,60 @@ In `summarize.py`, generate short text summaries for each file parsed in the pre
    ```
 
 * Store the output in a file designated by `output_file` in the config file that was also used by `parse_docs.py`
-* Use the following functions to structure this package:
-   * A main function that reads the dictionary, provide content to summarize, and stores results to write
-   * `summarize(prompt, content, model, context)` to generate the summary 
-        * `prompt` is a string variable that contains the LLM prompt
-        * `model` is a variable that can take the value `dummy` or `claude`
-           * `dummy` means to return the text `"dummy"` for each summary
-           * `claude` means to generate each summary using Claude from the Anthropic module
+
+#### Structure
+
+Use the following functions to structure this package:
+* A main function that reads the dictionary, provide content to summarize, and stores results to write
+* `summarize(prompt, content, model, context)` to generate the summary 
+     * `prompt` is a string variable that contains the LLM prompt
+     * `model` is a variable that can take the value `dummy` or `claude`
+        * `dummy` means to return the text `"dummy"` for each summary
+        * `claude` means to generate each summary using Claude from the Anthropic module
         * `context` is an optional string variable that can provide more information for the summarization
-   * `format_results()` that formats the results for a JavaScript file using the structure above
-   * `store_results(output_file)` that writes the results to the specified location `output_file`
+* `format_results()` that formats the results for a JavaScript file using the structure above
+* `store_results(output_file)` that writes the results to the specified location `output_file`
 
 For initial development, only consider the content above.
 Do not explore the prompt, evaluation, or additional considerations below.
 
+### Summmarization
+
+Various modes of summarization (basic or advanced) and to debug the package independent of summarization.
+
+#### Debug mode
+
+Generates placeholder text without any API calls.
+
+The debug value lists the header count and word count of the input text.
+
+Example:
+
+```
+const intro = "Summary in debug mode. Headers: 5, Word count: 145";
+```
+
+#### Basic mode
+
+Generates a basic summary using input paragraphs with possible consideration of headers.
+
+#### Advanced mode
+
+RAG-like workflow with semantic search.
+
+Workflow
+1. __Semantic indexing__: Generate initial summaries for all docs
+2. __Semantic search__: Find related docs measured by TF-IDF with cosine similarity
+3. __Enhanced context__: Builds context using the related docs
+4. __Summarize__: Summarize the main doc with context on the related docs
+
+Semantic search focuses on meaning and context of the query.
+In this context, a semantic approach evaluates the relationship of the present text to summarize with other docs.
+The goal is more accurate and more relevant results.
+
 ### Prompt
+
+Ideas for prompts for basic summarization with simple context.
 
 #### Basic content only
 
@@ -95,7 +138,7 @@ Exclude the following content as inputs:
 
 ### Additional considerations
 
-### RAG
+#### RAG
 
 Consider augmenting the provided information with other sources using retrieval-augmented generation.
 RAG can improve accuracy, enhance relevance, reduce hallucinations.
@@ -108,9 +151,8 @@ If we apply RAG to supply context from other internal docs,
 * Cut off by similarity score?
 * Cut off by top N matches?
 
-### Prompt caching
+#### Prompt caching
 
 Consider prompt caching for the entire doc set to reduce time and costs of supplying it for context at each run.
 It's unclear whether prompt caching would have any benefit for this use case since the cache time is 5 minutes
 by default and can be configured up to one hour. However, the write tokens are more expensive than the base price.
-
