@@ -31,6 +31,25 @@ def get_current_commit_hash() -> str:
         raise RuntimeError("🚨 Failed to get current git commit hash")
 
 
+def is_git_repository() -> bool:
+    """
+    Check if current directory is a git repository.
+
+    Returns:
+        True if git repo exists, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            ['git', 'rev-parse', '--git-dir'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
 def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
 
 
@@ -80,15 +99,28 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
 
     Returns:
         List of file paths to process
+
+    Raises:
+        RuntimeError: If commit hash provided but git not available
     """
     exclude_config = exclude_config or {}
 
+    # If commit hash is provided, git must be available
+    if last_commit is not None:
+        if not is_git_repository():
+            raise RuntimeError("Commit hash provided but not in a git repository. Please initialize git or remove commit hash from config.")
+
     # Step 1: Get files based on git status
     if last_commit is None:
-        # Get all markdown files if no commit specified
-        all_files = get_all_markdown_files(directory)
+        # No commit hash - get all files (don't require git)
+        try:
+            all_files = get_all_markdown_files(directory)
+        except Exception as e:
+            # Fall back to all files if any error
+            print(f"⚠️  Warning: Error during file discovery, processing all files: {e}")
+            all_files = get_all_markdown_files(directory)
     else:
-        # Get only changed files since commit
+        # Commit hash provided - git must work
         all_files = get_git_changed_files(directory, last_commit)
 
     # Step 2: Apply exclusion filters
@@ -204,18 +236,22 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
     for filepath in files_to_process:
         try:
             variable_name = filename_to_variable_name(filepath, directory)
-            content = parse_doc(filepath)
-            content_dict[variable_name] = content
+            parsed_content = parse_doc(filepath)
+            content_dict[variable_name] = parsed_content
             print(f"Parsed: {filepath} -> {variable_name}")
 
         except Exception as e:
             print(f"🚨 Error parsing {filepath} -- {e}")
             continue
 
-    # Update config with current commit hash for next run
-    current_commit = get_current_commit_hash()
-    config['commit'] = current_commit
-    save_config(config_path, config)
+    # Update config with current commit hash for next run (only if git available)
+    if is_git_repository():
+        current_commit = get_current_commit_hash()
+        config['commit'] = current_commit
+        save_config(config_path, config)
+    else:
+        # No git repo - don't update commit hash
+        print("⚠️  Not in a git repository. Commit hash will not be updated in config.")
 
     return content_dict
 
@@ -231,7 +267,9 @@ if __name__ == "__main__":
         last_commit = config.get('commit')
         results = parse_markdown_files(directory, last_commit, config_path)
         print(f"\nParsed {len(results)} files:")
-        for var_name, content in results.items():
-            print(f"  {var_name}: {len(content)} characters")
+        for var_name, parsed_data in results.items():
+            header_count = len(parsed_data["headers"])
+            paragraph_count = len(parsed_data["paragraphs"])
+            print(f"  {var_name}: {header_count} headers, {paragraph_count} paragraphs")
     except Exception as e:
         print(f"Error: {e}")
