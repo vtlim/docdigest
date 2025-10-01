@@ -5,6 +5,8 @@ Generates short text summaries for documentation content and formats them as Jav
 
 from typing import Dict, List, Optional
 import os
+import random
+import string
 import time
 import anthropic
 
@@ -140,7 +142,12 @@ def summarize_debug(parsed_doc: Dict[str, List[str]]) -> str:
     """
     header_count = len(parsed_doc.get("headers", []))
     word_count = sum(len(p.split()) for p in parsed_doc.get("paragraphs", []))
-    return f"Summary in debug mode. Headers: {header_count}, Word count: {word_count}"
+
+    # Generate random string to simulate random summary results
+    characters = string.ascii_letters + string.digits
+    random_alphanumeric = ''.join(random.choice(characters) for _ in range(5))
+
+    return f"Summary in debug mode. Headers: {header_count}, Word count: {word_count}, Random string: {random_alphanumeric}"
 
 
 def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
