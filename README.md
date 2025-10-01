@@ -106,7 +106,9 @@ Additional exclude examples:
   }
 ```
 
-### Commands to run
+### Usage
+
+Use one of the following commands to run `docdigest`:
 
 ```
 # Use default config
@@ -117,6 +119,16 @@ docdigest --config docdigest_config.json
 
 # Specify summarization model
 docdigest --model [claude,debug]
+
+# Dry run to estimate costs
+docdigest --model claude --dry-run
+```
+
+Note that Claude requires an Anthropic API key in your environment variable.
+For example:
+
+```
+export ANTHROPIC_API_KEY="your-key"
 ```
 
 ## Operational details

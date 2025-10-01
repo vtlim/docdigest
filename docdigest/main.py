@@ -12,6 +12,8 @@ def main():
                        help='Path to config file')
     parser.add_argument('--model', default='debug', choices=['debug', 'claude'],
                        help='Model to use for summarization')
+    parser.add_argument('--dry-run', action='store_true',
+                       help='Estimate costs without running summarization')
 
     args = parser.parse_args()
 
@@ -33,6 +35,12 @@ def main():
 
         if not parsed_docs:
             print("No changes detected. Exiting.")
+            return
+
+        # Dry-run mode: estimate costs and exit
+        if args.dry_run:
+            from .summarize import estimate_costs
+            estimate_costs(parsed_docs, args.model)
             return
 
         print(f"\n🤖 Generating summaries using {args.model} model...")
