@@ -55,3 +55,29 @@ For example,
   * `get_files()`: Get list of changed docs from a specified directory based on the commit difference
   * `parse_doc()`: Parse content from an individual doc
 
+### Results
+
+Parsed headers are all correct.
+
+For the parsed paragraphs:
+
+**Not included**
+- Lists: Ordered or unordered lists, such as prerequisites or numbered steps in tutorials.
+   - [ ⚠️ inconsistent ] Content within a list is included if it follows a line break.
+   - [ ⚠️ inconsistent ] The paragraph after a list can be missed.
+   - ✅ HTML list items, such as the processor examples that use a definition list `<dl>`, are excluded.
+   - [ ⚠️ lacking ] Reference pages that predominatly use bullet points (permissions) only rely on the introduction.
+   - ✅ Reference pages that use un-bulleted text (glossary) contain the full reference content.
+- [ ⚠️ extraneous ] Assets: References to images, although occasionally one slips through.
+- ✅ Code blocks.
+- ✅ Tables.
+
+**Included**
+- [ ❌ extraneous ] Links: Hyperlinks within the text.
+- [ ⚠️ extra syntax but ok ] Admonitions: Content of admonitions as well as `:::` syntax (start and close).
+- ✅ Expanders: Content and assets in expanders, excluding the expander title.
+
+**Resulting modifications**
+- Remove links, including asset references checking for `[]()`
+
+Consider including list items when the paragraph word count is below a certain threshold.
