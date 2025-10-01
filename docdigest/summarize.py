@@ -17,7 +17,7 @@ CLAUDE_OUTPUT_PRICE = 15.00  # $15 per 1M output tokens
 
 # Token estimation and limits
 WORDS_TO_TOKENS_RATIO = 1.3  # Approximate ratio for token estimation
-MAX_OUTPUT_TOKENS = 150  # Max tokens for summary output
+MAX_OUTPUT_TOKENS = 100  # Max tokens for summary output
 
 # Global prompt for summarization
 SUMMARIZATION_PROMPT = """
@@ -27,6 +27,7 @@ The summary will be displayed in an expandable section at the top of the documen
 
 **Instructions:**
 - For the provided content, summarize the main purpose and key information
+- Use the provided headers to understand the page structure, but don't give them disproportionate weight in the summary
 - Focus on what the reader will learn or accomplish
 - Write it for an audience of developers or technical users
 - Use plain text between 25-35 words and no special formatting
@@ -36,6 +37,9 @@ The summary will be displayed in an expandable section at the top of the documen
 
 **Content to summarize:**
 {content}
+
+**Document headers:**
+{headers}
 
 Provide only the summary text, nothing else.
 """
@@ -118,7 +122,7 @@ def estimate_costs(parsed_docs: Dict[str, Dict[str, List[str]]], model: str) -> 
     # Calculate cost
     estimated_cost = calculate_cost(total_input_tokens, total_output_tokens)
 
-    print(f"  • Estimated input tokens: {total_input_tokens:,} (based on actual content)")
+    print(f"  • Actual input tokens: {total_input_tokens:,}")
     print(f"  • Estimated output tokens: {total_output_tokens:,} ({MAX_OUTPUT_TOKENS} tokens per summary)")
     print(f"  • Estimated cost: ${estimated_cost:.4f}")
     print(f"\n  (Input: ${CLAUDE_INPUT_PRICE}/M tokens, Output: ${CLAUDE_OUTPUT_PRICE}/M tokens)")
