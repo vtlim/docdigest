@@ -5,6 +5,7 @@ from .config import load_config
 from .parse_docs import parse_markdown_files
 from .summarize import generate_summaries
 from .imports import update_markdown_imports
+from .commitify import commit_changes
 
 def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
@@ -14,6 +15,8 @@ def main():
                        help='Model to use for summarization')
     parser.add_argument('--dry-run', action='store_true',
                        help='Estimate costs without running summarization')
+    parser.add_argument('--automation', action='store_true',
+                       help='Run in automation mode (no interactive prompts)')
 
     args = parser.parse_args()
 
@@ -53,7 +56,12 @@ def main():
         print("\n📝 Adding imports to Markdown files...")
         update_markdown_imports(summaries, args.config)
 
-        # TODO: Add git commit step (part 4)
+        # Commit changes if summaries were generated
+        if summaries:
+            print("\n📦 Committing changes...")
+            commit_success = commit_changes(output_file, is_automation=args.automation)
+            if not commit_success:
+                print("⚠️  Commit process had issues, but pipeline completed.")
 
         print("\nPipeline completed successfully!")
 
