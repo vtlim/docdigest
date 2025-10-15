@@ -43,7 +43,7 @@ def create_backup(file_path: str) -> Optional[str]:
         return None
 
 
-def create_branch(branch_name: str) -> bool:
+def parse_summaries_file(file_path: str) -> Dict[str, str]:
     """
     Parse summaries.js file and extract variable:value pairs.
 
@@ -248,7 +248,7 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
     # First, get the version from git
     success, old_content, _ = run_git_command(['git', 'show', f'HEAD:{output_file}'])
     old_summaries = {}
-    if success:
+    if success and old_content:
         # Parse old content from git
         for line in old_content.split('\n'):
             if line.strip().startswith('const '):
@@ -257,8 +257,12 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
                     var_name = parts[0].replace('const', '').strip()
                     value_part = parts[1].strip()
                     if '"' in value_part:
-                        value = value_part.split('"')[1]
-                        old_summaries[var_name] = value
+                        # Extract value between quotes, handling escaped quotes
+                        try:
+                            value = value_part.split('"')[1]
+                            old_summaries[var_name] = value
+                        except IndexError:
+                            continue
 
     new_summaries = parse_summaries_file(output_file)
 
