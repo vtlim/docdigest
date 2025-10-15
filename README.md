@@ -22,7 +22,7 @@ These are short blurbs for users to quickly scan before diving into the content.
 A summary can help users confirm they're in the right place.
 By knowing what lies ahead, it can also help reduce cognitive load ("tell them what you're going to tell them").
 
-Why not refer to a doc introduction or its meta description?
+Can't someone just refer to a doc introduction or its meta description?
 
 Introductions can be inconsistent across pages, varying in length from 1-2 sentences or several paragraphs.
 The introductions can vary in detail, tone, or relation to the doc.
@@ -32,15 +32,13 @@ They can also become outdated as content evolves.
 Meta descriptions are intended for use on search engine result pages.
 They should be concise and contain target keywords to capture the relevant readers.
 They're usually 130-140 characters, or 1-2 sentences long, which can be too short for complex topics.
-Additionally, meta descriptions aren't present in the docs themselves,
-although one could create tooling to display them.
+Additionally, meta descriptions aren't present in the docs themselves (although one could create tooling to display them).
 
 Generated summaries have the following advantages over intros and meta descriptions:
 * Consistent in detail, length, tone, and format
 * Adapts to different content types, such as tutorial or reference
-* Long enough to provide a deeper overview than meta descriptions
+* Long enough to provide a sufficient overview
 * Current with the doc contents
-* Standard placement across all topics
 
 
 ## Prerequisites
@@ -59,12 +57,14 @@ The package can be adapted to work with other doc set configurations by changing
 
 `docdigest` assumes version control in a GitHub repository.
 It detects files changed from a reference commit hash and only generates summaries for those files.
-The version control is also important for the updated summaries.
+Version control is also important for the updated summaries.
 Each updated summary is committed as a separate line change so that any change can easily be reverted back.
 
 ## How to use
 
-### Input configuration file
+### Configuration file
+
+The default configuration file name is `docdigest_config.json`.
 
 Simplest configuration:
 
@@ -75,9 +75,9 @@ Simplest configuration:
 }
 ```
 
-For a first time run, omit `commit` from the configuration to process all docs.
-Subsequent iterations of calling `docdigest` updates the commit hash to the latest version.
-If no changes are detected, the config file remains the same.
+For a first time run, you don't have a `commit` field so that all docs get processed.
+Subsequent iterations of `docdigest` updates the commit hash to the latest version.
+If no changes are detected, the `commit` field in the config file remains the same.
 
 More advanced configuration:
 
@@ -92,9 +92,9 @@ More advanced configuration:
 }
 ```
 
-For files to avoid summarizing, list them in the `exclude` field.
-You can exclude files by regex pattern, filename, and directory name.
-The exclude patterns are relative to the provided directory.
+To avoid summarizing certain files, list them in the `exclude` field.
+You can specify exclusions by regex patterns, file names, and directory names.
+Define exclusions relative to `directory`.
 
 Additional exclude examples:
 
@@ -106,32 +106,38 @@ Additional exclude examples:
   }
 ```
 
-### Usage
+### LLM authentication
 
-Use one of the following commands to run `docdigest`:
-
-```
-# Use default config
-docdigest
-
-# Specify custom config
-docdigest --config docdigest_config.json
-
-# Specify summarization model
-docdigest --model [claude,debug]
-
-# Dry run to estimate costs
-docdigest --model claude --dry-run
-```
-
-Note that Claude requires an Anthropic API key in your environment variable.
+Claude requires an Anthropic API key in your environment variable.
 For example:
 
 ```
 export ANTHROPIC_API_KEY="your-key"
 ```
 
-## Operational details
+### Application call
+
+Use one of the following commands to run `docdigest`:
+
+```
+# Use config docdigest_config.json
+docdigest
+
+# Specify custom config
+docdigest --config docdigest_custom.json
+
+# Dry run to estimate costs
+docdigest --model claude --dry-run
+
+# Summarize in debug mode (no costs)
+docdigest --model debug
+
+# Summarize with Claude
+docdigest --model claude
+```
+
+
+## How it works
 
 The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
 The output is a JavaScript file that contains the summary for each file.
@@ -150,7 +156,7 @@ The tooling to generate AI summaries for the docs has the following components.
 3. 📝 Update markdown imports → modify .md files with components
 4. 🔄 Git commit
 
-For details, see the [design docs](./design/).
+For further details, see the [design docs](./design/).
 
 ## Package structure
 
@@ -167,7 +173,7 @@ docdigest
 
 ## Local development
 
-Set up your local machine:
+Set up Python:
 
 ```
 # create conda env
@@ -175,18 +181,25 @@ conda create --name summary
 conda activate summary
 
 # install packages
+# uses conda when possible, pip otherwise
 conda install anthropic
-
-# install fresh docusaurus
-npx create-docusaurus@latest example-docs classic
+pip install markdown-analysis
 ```
 
-For iterative development:
+Install application:
 
 ```
 conda activate summary
 pip install -e .
 ```
+
+Download test docs:
+
+```
+# install fresh docusaurus
+npx create-docusaurus@latest example-docs classic
+```
+
 
 ## Troubleshooting
 
