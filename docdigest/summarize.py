@@ -343,7 +343,6 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
         store_results(js_content, output_file)
 
         # Show summary statistics
-        print(f"Summarization complete")
         print(f"  • Documents processed: {len(summaries)}")
 
         if model == "claude":

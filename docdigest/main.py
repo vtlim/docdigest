@@ -50,7 +50,7 @@ def main():
             output_file=output_file
         )
 
-        print("\n📝 Updating markdown file imports...")
+        print("\n📝 Adding imports to Markdown files...")
         update_markdown_imports(summaries, args.config)
 
         # TODO: Add git commit step (part 4)
