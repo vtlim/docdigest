@@ -126,9 +126,12 @@ def has_git_config() -> bool:
     return name_success and email_success
 
 
-def validate_git_state() -> Tuple[bool, str]:
+def validate_git_state(allowed_files: Optional[List[str]] = None) -> Tuple[bool, str]:
     """
     Validate git state before committing changes.
+
+    Args:
+        allowed_files: List of file paths that are allowed to have changes
 
     Returns:
         Tuple of (is_valid: bool, error_message: str)
@@ -139,8 +142,21 @@ def validate_git_state() -> Tuple[bool, str]:
     if not has_git_config():
         return False, "Git user.name and user.email not configured. Run:\n  git config user.name 'Your Name'\n  git config user.email 'your@email.com'"
 
-    if not is_working_directory_clean():
-        return False, "Working directory has uncommitted changes. Please commit or stash them first."
+    # Check working directory - allow specific files to have changes
+    success, stdout, _ = run_git_command(['git', 'status', '--porcelain'])
+    if not success:
+        return False, "Failed to check git status"
+
+    if stdout:
+        # There are changes - check if they're all in allowed files
+        if allowed_files:
+            changed_files = [line.strip().split(None, 1)[1] for line in stdout.split('\n') if line.strip()]
+            disallowed_changes = [f for f in changed_files if f not in allowed_files]
+
+            if disallowed_changes:
+                return False, f"Working directory has uncommitted changes in: {', '.join(disallowed_changes)}. Please commit or stash them first."
+        else:
+            return False, "Working directory has uncommitted changes. Please commit or stash them first."
 
     return True, ""
 

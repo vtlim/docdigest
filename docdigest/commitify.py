@@ -215,8 +215,8 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         True if all commits successful, False otherwise
     """
 
-    # Validate git state
-    is_valid, error_msg = validate_git_state()
+    # Validate git state - allow summaries file to have changes
+    is_valid, error_msg = validate_git_state(allowed_files=[output_file])
     if not is_valid:
         print(f"🚨 {error_msg}")
         return False
