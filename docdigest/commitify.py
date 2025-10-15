@@ -4,76 +4,19 @@ Handles individual commits for each summary change with interactive and automate
 """
 
 import os
-import subprocess
 import shutil
 from datetime import datetime
 from typing import Dict, List, Optional
-
-
-def run_git_command(command: List[str]) -> tuple[bool, str, str]:
-    """
-    Run a git command and return success status with output.
-
-    Args:
-        command: Git command as list (e.g., ['git', 'status'])
-
-    Returns:
-        Tuple of (success: bool, stdout: str, stderr: str)
-    """
-    try:
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return True, result.stdout.strip(), result.stderr.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stdout.strip() if e.stdout else "", e.stderr.strip() if e.stderr else ""
-
-
-def is_git_repository() -> bool:
-    """Check if current directory is a git repository."""
-    success, _, _ = run_git_command(['git', 'rev-parse', '--git-dir'])
-    return success
-
-
-def get_current_branch() -> Optional[str]:
-    """Get the current git branch name."""
-    success, stdout, _ = run_git_command(['git', 'branch', '--show-current'])
-    return stdout if success else None
-
-
-def is_working_directory_clean() -> bool:
-    """Check if git working directory is clean (no uncommitted changes)."""
-    success, stdout, _ = run_git_command(['git', 'status', '--porcelain'])
-    return success and stdout == ""
-
-
-def has_git_config() -> bool:
-    """Check if git user.name and user.email are configured."""
-    name_success, _, _ = run_git_command(['git', 'config', 'user.name'])
-    email_success, _, _ = run_git_command(['git', 'config', 'user.email'])
-    return name_success and email_success
-
-
-def validate_git_state() -> tuple[bool, str]:
-    """
-    Validate git state before committing changes.
-
-    Returns:
-        Tuple of (is_valid: bool, error_message: str)
-    """
-    if not is_git_repository():
-        return False, "Not a git repository. Please initialize git first."
-
-    if not has_git_config():
-        return False, "Git user.name and user.email not configured. Run:\n  git config user.name 'Your Name'\n  git config user.email 'your@email.com'"
-
-    if not is_working_directory_clean():
-        return False, "Working directory has uncommitted changes. Please commit or stash them first."
-
-    return True, ""
+from .git_utils import (
+    run_git_command,
+    is_git_repository,
+    get_current_branch,
+    is_working_directory_clean,
+    has_git_config,
+    validate_git_state,
+    create_branch,
+    get_current_commit_hash
+)
 
 
 def create_backup(file_path: str) -> Optional[str]:
@@ -101,22 +44,6 @@ def create_backup(file_path: str) -> Optional[str]:
 
 
 def create_branch(branch_name: str) -> bool:
-    """
-    Create and checkout a new git branch.
-
-    Args:
-        branch_name: Name of the new branch
-
-    Returns:
-        True if successful, False otherwise
-    """
-    success, _, stderr = run_git_command(['git', 'checkout', '-b', branch_name])
-    if not success:
-        print(f"🚨 Failed to create branch: {stderr}")
-    return success
-
-
-def parse_summaries_file(file_path: str) -> Dict[str, str]:
     """
     Parse summaries.js file and extract variable:value pairs.
 

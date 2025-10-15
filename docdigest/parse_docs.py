@@ -10,6 +10,7 @@ from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
 from .config import load_config, save_config
 from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, filename_to_variable_name
+from .git_utils import is_git_repository, get_git_changed_files
 
 
 def get_current_commit_hash() -> str:
@@ -243,15 +244,6 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
         except Exception as e:
             print(f"🚨 Error parsing {filepath} -- {e}")
             continue
-
-    # Update config with current commit hash for next run (only if git available)
-    if is_git_repository():
-        current_commit = get_current_commit_hash()
-        config['commit'] = current_commit
-        save_config(config_path, config)
-    else:
-        # No git repo - don't update commit hash
-        print("⚠️  Not in a git repository. Commit hash will not be updated in config.")
 
     return content_dict
 

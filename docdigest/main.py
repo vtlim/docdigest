@@ -60,10 +60,22 @@ def main():
         if summaries:
             print("\n📦 Committing changes...")
             commit_success = commit_changes(output_file, is_automation=args.automation)
-            if not commit_success:
-                print("⚠️  Commit process had issues, but pipeline completed.")
 
-        print("\nPipeline completed successfully!")
+            # Update config with current commit hash after successful commits
+            if commit_success:
+                from .git_utils import get_current_commit_hash, is_git_repository
+                if is_git_repository():
+                    from .config import save_config
+                    current_commit = get_current_commit_hash()
+                    config['commit'] = current_commit
+                    save_config(args.config, config)
+                    print("✅ Config updated with latest commit hash")
+                else:
+                    print("⚠️  Not in a git repository. Config not updated.")
+            else:
+                print("⚠️  Commit process had issues. Config not updated.")
+
+        print("Pipeline completed successfully!")
 
     except Exception as e:
         print(f"Error: {e}")
