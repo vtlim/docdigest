@@ -106,6 +106,22 @@ Additional exclude examples:
   }
 ```
 
+
+### Debug mode
+
+Use debug mode to verify basic functionality of `docdigest`.
+It does everything except call the LLM for summary generation.
+
+Example output in `summaries.js`:
+
+```
+const intro = "Summary in debug mode. Headers: 5, Word count: 145, Random string: nqkpJ";
+```
+
+The output shows a count of headers, paragraph word count, and a random string.
+The random string ensures that `summaries.js` is a changed file.
+This reflects potential randomness in the LLM generating a different summary for the same content.
+
 ### LLM authentication
 
 Claude requires an Anthropic API key in your environment variable.
