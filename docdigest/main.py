@@ -63,13 +63,24 @@ def main():
 
             # Update config with current commit hash after successful commits
             if commit_success:
-                from .git_utils import get_current_commit_hash, is_git_repository
+                from .git_utils import get_current_commit_hash, is_git_repository, run_git_command
                 if is_git_repository():
                     from .config import save_config
                     current_commit = get_current_commit_hash()
                     config['commit'] = current_commit
                     save_config(args.config, config)
                     print("✅ Config updated with latest commit hash")
+
+                    # Commit the config file
+                    success, _, _ = run_git_command(['git', 'add', args.config])
+                    if success:
+                        success, _, _ = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
+                        if success:
+                            print("✅ Config file committed")
+                        else:
+                            print("⚠️  Failed to commit config file")
+                    else:
+                        print("⚠️  Failed to stage config file")
                 else:
                     print("⚠️  Not in a git repository. Config not updated.")
             else:
