@@ -177,6 +177,61 @@ def create_branch(branch_name: str) -> bool:
     return success
 
 
+def delete_branch(branch_name: str) -> bool:
+    """
+    Delete a local git branch.
+
+    Args:
+        branch_name: Name of the branch to delete
+
+    Returns:
+        True if successful, False otherwise
+    """
+    success, _, _ = run_git_command(['git', 'branch', '-D', branch_name])
+    return success
+
+
+def branch_exists(branch_name: str) -> bool:
+    """
+    Check if a local branch exists.
+
+    Args:
+        branch_name: Name of the branch to check
+
+    Returns:
+        True if branch exists, False otherwise
+    """
+    success, stdout, _ = run_git_command(['git', 'branch', '--list', branch_name])
+    return success and branch_name in stdout
+
+
+def push_to_remote(branch_name: str, remote: str = "origin", force: bool = False) -> Tuple[bool, str]:
+    """
+    Push branch to remote repository.
+
+    Args:
+        branch_name: Name of the branch to push
+        remote: Name of the remote (default: "origin")
+        force: Whether to force push
+
+    Returns:
+        Tuple of (success: bool, error_message: str)
+    """
+    # Build push command
+    if force:
+        cmd = ['git', 'push', '-f', '-u', remote, branch_name]
+    else:
+        cmd = ['git', 'push', '-u', remote, branch_name]
+
+    success, stdout, stderr = run_git_command(cmd)
+
+    if not success:
+        error_msg = stderr if stderr else stdout
+        return False, error_msg
+
+    return True, ""
+
+
 if __name__ == "__main__":
     # Example usage and tests
     print(f"Is git repository: {is_git_repository()}")

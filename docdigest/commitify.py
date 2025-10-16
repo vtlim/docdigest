@@ -15,8 +15,14 @@ from .git_utils import (
     has_git_config,
     validate_git_state,
     create_branch,
-    get_current_commit_hash
+    get_current_commit_hash,
+    delete_branch,
+    branch_exists,
+    push_to_remote
 )
+
+# Consistent branch name for all docdigest updates
+DOCDIGEST_BRANCH_NAME = "docdigest-auto-updates"
 
 
 def create_backup(file_path: str) -> Optional[str]:
@@ -228,10 +234,14 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
 
         # Offer to create new branch
         if prompt_user("Would you like to create a new branch for these changes?", "y"):
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            branch_name = f"docdigest-updates-{timestamp}"
-            print(f"Creating branch: {branch_name}")
-            if not create_branch(branch_name):
+            print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
+
+            # If branch exists locally, delete it first
+            if branch_exists(DOCDIGEST_BRANCH_NAME):
+                print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
+                delete_branch(DOCDIGEST_BRANCH_NAME)
+
+            if not create_branch(DOCDIGEST_BRANCH_NAME):
                 print("🚨 Failed to create branch. Aborting.")
                 return False
 
@@ -243,6 +253,22 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
                 print(f"✅ Backup created: {backup_path}")
             else:
                 print("🚨 Failed to create backup")
+    else:
+        # Automation mode - always use consistent branch
+        current_branch = get_current_branch()
+
+        # Only create branch if not already on it
+        if current_branch != DOCDIGEST_BRANCH_NAME:
+            print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
+
+            # If branch exists locally, delete it first
+            if branch_exists(DOCDIGEST_BRANCH_NAME):
+                print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
+                delete_branch(DOCDIGEST_BRANCH_NAME)
+
+            if not create_branch(DOCDIGEST_BRANCH_NAME):
+                print("🚨 Failed to create branch. Aborting.")
+                return False
 
     # Parse old and new summaries
     # First, get the version from git
@@ -315,6 +341,29 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
 
     # Success
     print(f"✅ Successfully created {len(commit_hashes)} commits")
+
+    # Push to remote
+    current_branch = get_current_branch()
+    should_push = False
+
+    if is_automation:
+        # Automation mode - always push
+        should_push = True
+    else:
+        # Interactive mode - ask user
+        should_push = prompt_user("Push changes to remote?", "y")
+
+    if should_push and current_branch:
+        print(f"📤 Pushing {current_branch} to origin...")
+        success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
+
+        if success:
+            print(f"✅ Successfully pushed to origin/{current_branch}")
+        else:
+            print(f"⚠️  Failed to push to remote: {error_msg}")
+            print("⚠️  Commits are saved locally but not pushed to remote")
+            # Don't return False - local commits succeeded
+
     return True
 
 
