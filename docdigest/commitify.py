@@ -17,8 +17,7 @@ from .git_utils import (
     create_branch,
     get_current_commit_hash,
     delete_branch,
-    branch_exists,
-    push_to_remote
+    branch_exists
 )
 
 # Consistent branch name for all docdigest updates
@@ -341,29 +340,6 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
 
     # Success
     print(f"✅ Successfully created {len(commit_hashes)} commits")
-
-    # Push to remote
-    current_branch = get_current_branch()
-    should_push = False
-
-    if is_automation:
-        # Automation mode - always push
-        should_push = True
-    else:
-        # Interactive mode - ask user
-        should_push = prompt_user("Push changes to remote?", "y")
-
-    if should_push and current_branch:
-        print(f"📤 Pushing {current_branch} to origin...")
-        success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
-
-        if success:
-            print(f"✅ Successfully pushed to origin/{current_branch}")
-        else:
-            print(f"⚠️  Failed to push to remote: {error_msg}")
-            print("⚠️  Commits are saved locally but not pushed to remote")
-            # Don't return False - local commits succeeded
-
     return True
 
 
