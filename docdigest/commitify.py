@@ -219,6 +219,7 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
     Returns:
         True if all commits successful, False otherwise
     """
+    print("🔄 Starting git commit process...")
 
     # Validate git state - allow summaries file to have changes
     is_valid, error_msg = validate_git_state(allowed_files=[output_file])
@@ -231,25 +232,24 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         current_branch = get_current_branch()
         print(f"📍 Current branch: {current_branch}")
 
-        # Offer to create new branch
-        if prompt_user("Would you like to create a new branch for these changes?", "y"):
-            print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
+        # Always use consistent branch name
+        print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
 
-            # If branch exists locally, delete it first
-            if branch_exists(DOCDIGEST_BRANCH_NAME):
-                print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
-                delete_branch(DOCDIGEST_BRANCH_NAME)
+        # If branch exists locally, delete it first
+        if branch_exists(DOCDIGEST_BRANCH_NAME):
+            print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
+            delete_branch(DOCDIGEST_BRANCH_NAME)
 
-            if not create_branch(DOCDIGEST_BRANCH_NAME):
-                print("🚨 Failed to create branch. Aborting.")
-                return False
+        if not create_branch(DOCDIGEST_BRANCH_NAME):
+            print("🚨 Failed to create branch. Aborting.")
+            return False
 
         # Offer backup
-        backup_question = "Would you like to create a backup of summaries.js? Answer 'yes' if it's NOT already version controlled in git, and you'd like to retain the existing summaries. Otherwise answer 'no'."
+        backup_question = "Would you like to create a local backup of summaries.js?"
         if prompt_user(backup_question, "n"):
             backup_path = create_backup(output_file)
             if backup_path:
-                print(f"✅ Backup created: {backup_path}")
+                print(f"  • Backup created: {backup_path}")
             else:
                 print("🚨 Failed to create backup")
     else:
@@ -300,12 +300,6 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
 
     print(f"📊 Found {len(changes)} changes to commit")
 
-    # In interactive mode, confirm before proceeding
-    if not is_automation:
-        if not prompt_user(f"Ready to create {len(changes)} individual commits?", "y"):
-            print("❌ Commit process cancelled by user")
-            return False
-
     # Commit each change individually
     commit_hashes = []
     failed_change = None
@@ -339,7 +333,7 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         return False
 
     # Success
-    print(f"✅ Successfully created {len(commit_hashes)} commits")
+    print(f"  • Successfully created {len(commit_hashes)} commits")
     return True
 
 

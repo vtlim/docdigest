@@ -168,10 +168,10 @@ and and the Markdown file will have the summary expander removed.
 The tooling to generate AI summaries for the docs has the following components.
 
 1. 📖 Parse documentation
-2. 🧮 Dry-run (optional, exits early)
-3. 🤖 Generate summaries (writes summaries.js)
-4. 📝 Update markdown imports (modifies .md files)
-5. 📦 Commit changes (individual commits per summary)
+2. 🤖 Generate summaries (writes summaries.js)
+   1. 🧮 Parallel option to dry-run (optional, exits early)
+3. 📝 Update markdown imports (modifies .md files)
+4. 📦 Commit changes (individual commits per summary)
 
 For further details, see the [design docs](./design/).
 

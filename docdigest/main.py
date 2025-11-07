@@ -58,57 +58,66 @@ def main():
 
         # Commit changes if summaries were generated
         if summaries:
-            print("\n📦 Committing changes...")
-            commit_success = commit_changes(output_file, is_automation=args.automation)
+            # In interactive mode, ask if user wants to commit
+            should_commit = True
+            if not args.automation:
+                from .commitify import prompt_user
+                should_commit = prompt_user("Commit and push changes?", "y")
 
-            # Update config with current commit hash after successful commits
-            if commit_success:
-                from .git_utils import get_current_commit_hash, is_git_repository, run_git_command, get_current_branch, push_to_remote
-                if is_git_repository():
-                    from .config import save_config
-                    current_commit = get_current_commit_hash()
-                    config['commit'] = current_commit
-                    save_config(args.config, config)
-                    print("✅ Config updated with latest commit hash")
-
-                    # Commit the config file
-                    success, _, _ = run_git_command(['git', 'add', args.config])
-                    if success:
-                        success, _, _ = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
-                        if success:
-                            print("✅ Config file committed")
-
-                            # Push to remote after all commits are done
-                            current_branch = get_current_branch()
-                            should_push = False
-
-                            if args.automation:
-                                # Automation mode - always push
-                                should_push = True
-                            else:
-                                # Interactive mode - ask user
-                                from .commitify import prompt_user
-                                should_push = prompt_user("Push changes to remote?", "y")
-
-                            if should_push and current_branch:
-                                print(f"📤 Pushing {current_branch} to origin...")
-                                success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
-
-                                if success:
-                                    print(f"✅ Successfully pushed to origin/{current_branch}")
-                                else:
-                                    print(f"⚠️  Failed to push to remote: {error_msg}")
-                                    print("⚠️  Commits are saved locally but not pushed to remote")
-                        else:
-                            print("⚠️  Failed to commit config file")
-                    else:
-                        print("⚠️  Failed to stage config file")
-                else:
-                    print("⚠️  Not in a git repository. Config not updated.")
+            if not should_commit:
+                print("⏭️ Skipping commit stage")
             else:
-                print("⚠️  Commit process had issues. Config not updated.")
+                print("\n📦 Committing changes...")
+                commit_success = commit_changes(output_file, is_automation=args.automation)
 
-        print("Pipeline completed successfully!")
+                # Update config with current commit hash after successful commits
+                if commit_success:
+                    from .git_utils import get_current_commit_hash, is_git_repository, run_git_command, get_current_branch, push_to_remote
+                    if is_git_repository():
+                        from .config import save_config
+                        current_commit = get_current_commit_hash()
+                        config['commit'] = current_commit
+                        save_config(args.config, config)
+                        print("  • Config updated with latest commit hash")
+
+                        # Commit the config file
+                        success, _, _ = run_git_command(['git', 'add', args.config])
+                        if success:
+                            success, _, _ = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
+                            if success:
+                                print("  • Config file committed")
+
+                                # Push to remote after all commits are done
+                                current_branch = get_current_branch()
+                                should_push = False
+
+                                if args.automation:
+                                    # Automation mode - always push
+                                    should_push = True
+                                else:
+                                    # Interactive mode - ask user
+                                    should_push = prompt_user("Push changes to remote?", "y")
+
+                                if should_push and current_branch:
+                                    print(f"📤 Pushing {current_branch} to origin...")
+                                    success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
+
+                                    if success:
+                                        print(f"  • Successfully pushed to origin/{current_branch}")
+                                        print("    Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                                    else:
+                                        print(f"⚠️  Failed to push to remote: {error_msg}")
+                                        print("⚠️  Commits are saved locally but not pushed to remote")
+                            else:
+                                print("⚠️  Failed to commit config file")
+                        else:
+                            print("⚠️  Failed to stage config file")
+                    else:
+                        print("⚠️  Not in a git repository. Config not updated.")
+                else:
+                    print("⚠️  Commit process had issues. Config not updated.")
+
+        print("\n✅ Pipeline completed successfully!")
 
     except Exception as e:
         print(f"Error: {e}")
