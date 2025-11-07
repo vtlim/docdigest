@@ -82,6 +82,36 @@ def parse_summaries_file(file_path: str) -> Dict[str, str]:
     return summaries
 
 
+def write_summaries_file(file_path: str, summaries: Dict[str, str]) -> bool:
+    """
+    Write summaries dictionary to the summaries.js file.
+
+    Args:
+        file_path: Path to summaries.js file
+        summaries: Dictionary of variable names to summary values
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write("/*\nSummaries for each topic, matched by filename\n*/\n\n")
+
+            # Write all summaries
+            for var_name, value in summaries.items():
+                # Escape quotes in the value
+                escaped_value = value.replace('"', '\\"')
+                f.write(f'const {var_name} = "{escaped_value}";\n')
+
+            f.write("\n\nmodule.exports = {\n")
+            f.write(",\n".join(f"  {var_name}" for var_name in summaries.keys()))
+            f.write("\n};\n")
+        return True
+    except Exception as e:
+        print(f"🚨 Failed to write file: {e}")
+        return False
+
+
 def get_summaries_changes(old_summaries: Dict[str, str], new_summaries: Dict[str, str]) -> List[Dict]:
     """
     Compare old vs new summaries and return individual changes.
@@ -296,15 +326,30 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         print("✅ No changes detected in summaries file")
         return True
 
-    # Commit each change individually
+    # Commit each change individually by updating the file incrementally
     commit_hashes = []
     failed_change = None
+
+    # Start with old summaries and apply changes one at a time
+    current_summaries = old_summaries.copy()
 
     for i, change in enumerate(changes, 1):
         change_type = change["type"].capitalize()
         variable = change["variable"]
         print(f"[{i}/{len(changes)}] {change_type}: {variable}")
 
+        # Apply this single change to current_summaries
+        if change["type"] == "add" or change["type"] == "update":
+            current_summaries[variable] = new_summaries[variable]
+        elif change["type"] == "remove":
+            current_summaries.pop(variable, None)
+
+        # Write the updated summaries to file
+        if not write_summaries_file(output_file, current_summaries):
+            failed_change = change
+            break
+
+        # Now commit this single change
         success, commit_hash = commit_individual_change(output_file, change)
 
         if not success:
