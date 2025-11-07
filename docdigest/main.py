@@ -4,7 +4,7 @@ import argparse
 from .config import load_config
 from .parse_docs import parse_markdown_files
 from .summarize import generate_summaries
-from .imports import update_markdown_imports
+from .import_results import update_markdown_imports
 from .commitify import commit_changes
 
 def main():
@@ -103,6 +103,7 @@ def main():
                                     if success:
                                         print(f"  • Successfully pushed to origin/{current_branch}")
                                         print("🫵 Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                                        print("You can switch back to your previous working branch.")
                                     else:
                                         print(f"⚠️  Failed to push to remote: {error_msg}")
                                         print("⚠️  Commits are saved locally but not pushed to remote")
