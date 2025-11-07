@@ -238,7 +238,7 @@ def prompt_user(question: str, default: str = "n") -> bool:
             print("Please answer 'yes' or 'no'")
 
 
-def commit_changes(output_file: str, config_path: str, is_automation: bool = False) -> bool:
+def commit_changes(output_file: str, config_path: str, is_automation: bool = False, should_push: bool = False) -> bool:
     """
     Main function to commit changes to summaries file and config file.
 
@@ -246,6 +246,7 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
         output_file: Path to summaries.js file
         config_path: Path to config file
         is_automation: True if running in automation mode, False for interactive
+        should_push: True to push to remote after committing
 
     Returns:
         True if all commits successful, False otherwise
@@ -394,6 +395,21 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
                 print(f"⚠️  Failed to commit config file: {stderr}")
         else:
             print("⚠️  Failed to stage config file")
+
+        # Push to remote if requested (before switching branches)
+        if should_push:
+            from .git_utils import push_to_remote
+            current_branch = get_current_branch()
+
+            if current_branch:
+                success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
+
+                if success:
+                    print(f"  • Successfully pushed to origin/{current_branch}")
+                    print("👉 Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                else:
+                    print(f"⚠️  Failed to push to remote: {error_msg}")
+                    print("⚠️  Commits are saved locally but not pushed to remote")
 
         return True
 

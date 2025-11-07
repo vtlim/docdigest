@@ -58,42 +58,27 @@ def main():
 
         # Commit changes if summaries were generated
         if summaries:
-            # In interactive mode, ask if user wants to commit
+            # In interactive mode, ask if user wants to commit and push
             should_commit = True
+            should_push = False
+
             if not args.automation:
                 from .commitify import prompt_user
                 should_commit = prompt_user("Commit changes?", "y")
 
+                if should_commit:
+                    should_push = prompt_user("Push changes to remote?", "y")
+            else:
+                # Automation mode - always commit and push
+                should_push = True
+
             if not should_commit:
-                print("⏭️ Skipping commit stage")
+                print("⭐️ Skipping commit stage")
             else:
                 print("\n📦 Committing changes...")
-                commit_success = commit_changes(output_file, args.config, is_automation=args.automation)
+                commit_success = commit_changes(output_file, args.config, is_automation=args.automation, should_push=should_push)
 
-                # Push to remote after successful commits
-                if commit_success:
-                    from .git_utils import get_current_branch, push_to_remote
-
-                    current_branch = get_current_branch()
-                    should_push = False
-
-                    if args.automation:
-                        # Automation mode - always push
-                        should_push = True
-                    else:
-                        # Interactive mode - ask user
-                        should_push = prompt_user("Push changes to remote?", "y")
-
-                    if should_push and current_branch:
-                        success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
-
-                        if success:
-                            print(f"  • Successfully pushed to origin/{current_branch}")
-                            print("👉 Go to GitHub and create a PR from docdigest-auto-updates to main.")
-                        else:
-                            print(f"⚠️  Failed to push to remote: {error_msg}")
-                            print("⚠️  Commits are saved locally but not pushed to remote")
-                else:
+                if not commit_success:
                     print("⚠️  Commit process had issues.")
 
         print("\n✅ Pipeline completed successfully!")
