@@ -62,59 +62,39 @@ def main():
             should_commit = True
             if not args.automation:
                 from .commitify import prompt_user
-                should_commit = prompt_user("Commit and push changes?", "y")
+                should_commit = prompt_user("Commit changes?", "y")
 
             if not should_commit:
                 print("⏭️ Skipping commit stage")
             else:
                 print("\n📦 Committing changes...")
-                commit_success = commit_changes(output_file, is_automation=args.automation)
+                commit_success = commit_changes(output_file, args.config, is_automation=args.automation)
 
-                # Update config with current commit hash after successful commits
+                # Push to remote after successful commits
                 if commit_success:
-                    from .git_utils import get_current_commit_hash, is_git_repository, run_git_command, get_current_branch, push_to_remote
-                    if is_git_repository():
-                        from .config import save_config
-                        current_commit = get_current_commit_hash()
-                        config['commit'] = current_commit
-                        save_config(args.config, config)
+                    from .git_utils import get_current_branch, push_to_remote
 
-                        # Commit the config file
-                        success, _, _ = run_git_command(['git', 'add', args.config])
-                        if success:
-                            success, _, _ = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
-                            if success:
-                                print("  • Committed config file with updated commit hash")
+                    current_branch = get_current_branch()
+                    should_push = False
 
-                                # Push to remote after all commits are done
-                                current_branch = get_current_branch()
-                                should_push = False
-
-                                if args.automation:
-                                    # Automation mode - always push
-                                    should_push = True
-                                else:
-                                    # Interactive mode - ask user
-                                    should_push = prompt_user("Push changes to remote?", "y")
-
-                                if should_push and current_branch:
-                                    success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
-
-                                    if success:
-                                        print(f"  • Successfully pushed to origin/{current_branch}")
-                                        print("🫵 Go to GitHub and create a PR from docdigest-auto-updates to main.")
-                                        print("You can switch back to your previous working branch.")
-                                    else:
-                                        print(f"⚠️  Failed to push to remote: {error_msg}")
-                                        print("⚠️  Commits are saved locally but not pushed to remote")
-                            else:
-                                print("⚠️  Failed to commit config file")
-                        else:
-                            print("⚠️  Failed to stage config file")
+                    if args.automation:
+                        # Automation mode - always push
+                        should_push = True
                     else:
-                        print("⚠️  Not in a git repository. Config not updated.")
+                        # Interactive mode - ask user
+                        should_push = prompt_user("Push changes to remote?", "y")
+
+                    if should_push and current_branch:
+                        success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
+
+                        if success:
+                            print(f"  • Successfully pushed to origin/{current_branch}")
+                            print("👉 Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                        else:
+                            print(f"⚠️  Failed to push to remote: {error_msg}")
+                            print("⚠️  Commits are saved locally but not pushed to remote")
                 else:
-                    print("⚠️  Commit process had issues. Config not updated.")
+                    print("⚠️  Commit process had issues.")
 
         print("\n✅ Pipeline completed successfully!")
 

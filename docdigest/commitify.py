@@ -238,54 +238,32 @@ def prompt_user(question: str, default: str = "n") -> bool:
             print("Please answer 'yes' or 'no'")
 
 
-def commit_changes(output_file: str, is_automation: bool = False) -> bool:
+def commit_changes(output_file: str, config_path: str, is_automation: bool = False) -> bool:
     """
-    Main function to commit changes to summaries file.
+    Main function to commit changes to summaries file and config file.
 
     Args:
         output_file: Path to summaries.js file
+        config_path: Path to config file
         is_automation: True if running in automation mode, False for interactive
 
     Returns:
         True if all commits successful, False otherwise
     """
-    # Validate git state - allow summaries file to have changes
-    is_valid, error_msg = validate_git_state(allowed_files=[output_file])
+    # Validate git state - allow summaries file and config file to have changes
+    is_valid, error_msg = validate_git_state(allowed_files=[output_file, config_path])
     if not is_valid:
         print(f"🚨 {error_msg}")
         return False
 
-    # Interactive mode checks
-    if not is_automation:
-        current_branch = get_current_branch()
-        print(f"📍 Current branch: {current_branch}")
+    # Capture original branch to restore at the end
+    original_branch = get_current_branch()
+    print(f"📍 Current branch: {original_branch}")
 
-        # Always use consistent branch name
-        print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
-
-        # If branch exists locally, delete it first
-        if branch_exists(DOCDIGEST_BRANCH_NAME):
-            print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
-            delete_branch(DOCDIGEST_BRANCH_NAME)
-
-        if not create_branch(DOCDIGEST_BRANCH_NAME):
-            print("🚨 Failed to create branch. Aborting.")
-            return False
-
-        # Offer backup
-        backup_question = "Would you like to create a local backup of summaries.js?"
-        if prompt_user(backup_question, "n"):
-            backup_path = create_backup(output_file)
-            if backup_path:
-                print(f"  • Backup created: {backup_path}")
-            else:
-                print("🚨 Failed to create backup")
-    else:
-        # Automation mode - always use consistent branch
-        current_branch = get_current_branch()
-
-        # Only create branch if not already on it
-        if current_branch != DOCDIGEST_BRANCH_NAME:
+    try:
+        # Interactive mode checks
+        if not is_automation:
+            # Always use consistent branch name
             print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
 
             # If branch exists locally, delete it first
@@ -297,87 +275,140 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
                 print("🚨 Failed to create branch. Aborting.")
                 return False
 
-    # Parse old and new summaries
-    # First, get the version from git
-    success, old_content, _ = run_git_command(['git', 'show', f'HEAD:{output_file}'])
-    old_summaries = {}
-    if success and old_content:
-        # Parse old content from git
-        for line in old_content.split('\n'):
-            if line.strip().startswith('const '):
-                parts = line.split('=', 1)
-                if len(parts) == 2:
-                    var_name = parts[0].replace('const', '').strip()
-                    value_part = parts[1].strip()
-                    if '"' in value_part:
-                        # Extract value between quotes, handling escaped quotes
-                        try:
-                            value = value_part.split('"')[1]
-                            old_summaries[var_name] = value
-                        except IndexError:
-                            continue
+            # Offer backup
+            backup_question = "Would you like to create a local backup of summaries.js?"
+            if prompt_user(backup_question, "n"):
+                backup_path = create_backup(output_file)
+                if backup_path:
+                    print(f"  • Backup created: {backup_path}")
+                else:
+                    print("🚨 Failed to create backup")
+        else:
+            # Automation mode - always use consistent branch
+            # Only create branch if not already on it
+            if original_branch != DOCDIGEST_BRANCH_NAME:
+                print(f"Creating branch: {DOCDIGEST_BRANCH_NAME}")
 
-    new_summaries = parse_summaries_file(output_file)
+                # If branch exists locally, delete it first
+                if branch_exists(DOCDIGEST_BRANCH_NAME):
+                    print(f"Branch {DOCDIGEST_BRANCH_NAME} already exists locally, recreating...")
+                    delete_branch(DOCDIGEST_BRANCH_NAME)
 
-    # Get changes
-    changes = get_summaries_changes(old_summaries, new_summaries)
+                if not create_branch(DOCDIGEST_BRANCH_NAME):
+                    print("🚨 Failed to create branch. Aborting.")
+                    return False
 
-    if not changes:
-        print("✅ No changes detected in summaries file")
+        # Parse old and new summaries
+        # First, get the version from git
+        success, old_content, _ = run_git_command(['git', 'show', f'HEAD:{output_file}'])
+        old_summaries = {}
+        if success and old_content:
+            # Parse old content from git
+            for line in old_content.split('\n'):
+                if line.strip().startswith('const '):
+                    parts = line.split('=', 1)
+                    if len(parts) == 2:
+                        var_name = parts[0].replace('const', '').strip()
+                        value_part = parts[1].strip()
+                        if '"' in value_part:
+                            # Extract value between quotes, handling escaped quotes
+                            try:
+                                value = value_part.split('"')[1]
+                                old_summaries[var_name] = value
+                            except IndexError:
+                                continue
+
+        new_summaries = parse_summaries_file(output_file)
+
+        # Get changes
+        changes = get_summaries_changes(old_summaries, new_summaries)
+
+        if not changes:
+            print("✅ No changes detected in summaries file")
+            return True
+
+        # Commit each change individually by updating the file incrementally
+        commit_hashes = []
+        failed_change = None
+
+        # Start with old summaries and apply changes one at a time
+        current_summaries = old_summaries.copy()
+
+        for i, change in enumerate(changes, 1):
+            change_type = change["type"].capitalize()
+            variable = change["variable"]
+            print(f"[{i}/{len(changes)}] {change_type}: {variable}")
+
+            # Apply this single change to current_summaries
+            if change["type"] == "add" or change["type"] == "update":
+                current_summaries[variable] = new_summaries[variable]
+            elif change["type"] == "remove":
+                current_summaries.pop(variable, None)
+
+            # Write the updated summaries to file
+            if not write_summaries_file(output_file, current_summaries):
+                failed_change = change
+                break
+
+            # Now commit this single change
+            success, commit_hash = commit_individual_change(output_file, change)
+
+            if not success:
+                failed_change = change
+                break
+
+            if commit_hash:
+                commit_hashes.append(commit_hash)
+
+        # Handle failure
+        if failed_change:
+            print(f"🚨 Failed to commit change for {failed_change['variable']}")
+
+            # In interactive mode, ask about rollback
+            should_rollback = True
+            if not is_automation:
+                should_rollback = prompt_user(f"Rollback {len(commit_hashes)} completed commits?", "y")
+
+            if should_rollback:
+                rollback_commits(commit_hashes)
+
+            return False
+
+        # Success - now commit the config file
+        print(f"  • Committed {len(commit_hashes)} summaries")
+
+        # Update and commit config file
+        from .config import load_config, save_config
+        config = load_config(config_path)
+        current_commit = get_current_commit_hash()
+        config['commit'] = current_commit
+        save_config(config_path, config)
+
+        # Commit the config file
+        success, _, _ = run_git_command(['git', 'add', config_path])
+        if success:
+            success, _, stderr = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
+            if success:
+                print("  • Committed config file with updated commit hash")
+            else:
+                print(f"⚠️  Failed to commit config file: {stderr}")
+        else:
+            print("⚠️  Failed to stage config file")
+
         return True
 
-    # Commit each change individually by updating the file incrementally
-    commit_hashes = []
-    failed_change = None
-
-    # Start with old summaries and apply changes one at a time
-    current_summaries = old_summaries.copy()
-
-    for i, change in enumerate(changes, 1):
-        change_type = change["type"].capitalize()
-        variable = change["variable"]
-        print(f"[{i}/{len(changes)}] {change_type}: {variable}")
-
-        # Apply this single change to current_summaries
-        if change["type"] == "add" or change["type"] == "update":
-            current_summaries[variable] = new_summaries[variable]
-        elif change["type"] == "remove":
-            current_summaries.pop(variable, None)
-
-        # Write the updated summaries to file
-        if not write_summaries_file(output_file, current_summaries):
-            failed_change = change
-            break
-
-        # Now commit this single change
-        success, commit_hash = commit_individual_change(output_file, change)
-
-        if not success:
-            failed_change = change
-            break
-
-        if commit_hash:
-            commit_hashes.append(commit_hash)
-
-    # Handle failure
-    if failed_change:
-        print(f"🚨 Failed to commit change for {failed_change['variable']}")
-
-        # In interactive mode, ask about rollback
-        should_rollback = True
-        if not is_automation:
-            should_rollback = prompt_user(f"Rollback {len(commit_hashes)} completed commits?", "y")
-
-        if should_rollback:
-            rollback_commits(commit_hashes)
-
-        return False
-
-    # Success
-    print(f"  • Committed {len(commit_hashes)} summaries")
-    return True
+    finally:
+        # Always restore original branch
+        current_branch = get_current_branch()
+        if current_branch != original_branch and original_branch:
+            print(f"\n🔙 Returning to original branch: {original_branch}")
+            if create_branch(original_branch) if not branch_exists(original_branch) else run_git_command(['git', 'checkout', original_branch])[0]:
+                print(f"  • Switched back to {original_branch}")
+            else:
+                print(f"⚠️  Failed to switch back to {original_branch}")
+                print(f"⚠️  You are currently on: {current_branch}")
 
 
 if __name__ == "__main__":
     # Example usage
-    commit_changes("static/js/summaries.js", is_automation=False)
+    commit_changes("static/js/summaries.js", "docdigest_config.json", is_automation=False)
