@@ -4,8 +4,9 @@ Contains utilities for file discovery, exclusion checking, and filename processi
 """
 
 import os
+import re
 import fnmatch
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 def get_all_markdown_files(directory: str) -> List[str]:
@@ -98,25 +99,66 @@ def filter_excluded_files(files: List[str], exclude_config: Dict, base_directory
     return filtered_files
 
 
-def filename_to_variable_name(filepath: str, base_directory: str) -> str:
+def extract_frontmatter_id(filepath: str) -> Optional[str]:
     """
-    Convert file path to valid Python/JavaScript variable name.
+    Extract the 'id' field from YAML frontmatter in a Markdown file.
+
+    Args:
+        filepath: Path to the markdown file
+
+    Returns:
+        The id value if found, None otherwise
+    """
+    try:
+        with open(filepath, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        # Match YAML frontmatter between --- markers
+        frontmatter_match = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
+
+        if not frontmatter_match:
+            return None
+
+        frontmatter = frontmatter_match.group(1)
+
+        # Look for id: value line
+        id_match = re.search(r'^id:\s*(.+)$', frontmatter, re.MULTILINE)
+
+        if id_match:
+            # Extract and clean the id value (remove quotes if present)
+            id_value = id_match.group(1).strip()
+            id_value = id_value.strip('"').strip("'")
+            return id_value
+
+        return None
+    except Exception:
+        return None
+
+
+def get_variable_name(filepath: str, base_directory: str) -> str:
+    """
+    Get a valid Python/JavaScript variable name for a markdown file.
+    First attempts to use the 'id' from YAML frontmatter, falls back to filename.
 
     Args:
         filepath: Full path to the markdown file
         base_directory: Base directory to make path relative to
 
     Returns:
-        Valid variable name (e.g., "ref_s2s", "send_events_splunk_hec")
+        Valid variable name (e.g., "otlp", "send_events_splunk_hec")
     """
-    # Get relative path from base directory
-    relative_path = os.path.relpath(filepath, base_directory)
+    # Try to get id from frontmatter first
+    frontmatter_id = extract_frontmatter_id(filepath)
 
-    # Remove .md extension
-    name = os.path.splitext(relative_path)[0]
-
-    # Replace path separators and hyphens with underscores
-    name = name.replace('/', '_').replace('\\', '_').replace('-', '_')
+    if frontmatter_id:
+        # Use the id from frontmatter
+        name = frontmatter_id
+    else:
+        # Fall back to filename-based approach
+        relative_path = os.path.relpath(filepath, base_directory)
+        name = os.path.splitext(relative_path)[0]
+        # Replace path separators and hyphens with underscores
+        name = name.replace('/', '_').replace('\\', '_').replace('-', '_')
 
     # Convert to lowercase and remove any remaining invalid characters
     name = ''.join(c.lower() if c.isalnum() or c == '_' else '_' for c in name)
@@ -151,5 +193,5 @@ if __name__ == "__main__":
 
     # Test variable name generation
     for filepath in filtered[:5]:  # Show first 5
-        var_name = filename_to_variable_name(filepath, "docs/")
+        var_name = get_variable_name(filepath, "docs/")
         print(f"  {filepath} -> {var_name}")

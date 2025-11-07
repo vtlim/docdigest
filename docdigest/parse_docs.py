@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
 from .config import load_config, save_config
-from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, filename_to_variable_name
+from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, get_variable_name
 from .git_utils import is_git_repository, get_git_changed_files
 
 
@@ -236,7 +236,7 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
 
     for filepath in files_to_process:
         try:
-            variable_name = filename_to_variable_name(filepath, directory)
+            variable_name = get_variable_name(filepath, directory)
             parsed_content = parse_doc(filepath)
             content_dict[variable_name] = parsed_content
             print(f"Parsed: {filepath} -> {variable_name}")

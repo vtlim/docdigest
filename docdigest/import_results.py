@@ -6,7 +6,7 @@ Modifies Markdown files to add/remove import statements and summary UI component
 import os
 import re
 from typing import Dict, List, Optional
-from .file_utils import get_all_markdown_files, should_exclude_file, filename_to_variable_name
+from .file_utils import get_all_markdown_files, should_exclude_file, get_variable_name
 from .config import load_config
 
 
@@ -221,7 +221,7 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
     # Process each markdown file
     for filepath in markdown_files:
         # Get variable name for this file
-        variable_name = filename_to_variable_name(filepath, directory)
+        variable_name = get_variable_name(filepath, directory)
 
         # Check if this file should have a summary (not excluded AND has summary)
         is_excluded = should_exclude_file(filepath, exclude_config, directory)
