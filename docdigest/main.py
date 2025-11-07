@@ -78,14 +78,13 @@ def main():
                         current_commit = get_current_commit_hash()
                         config['commit'] = current_commit
                         save_config(args.config, config)
-                        print("  • Config updated with latest commit hash")
 
                         # Commit the config file
                         success, _, _ = run_git_command(['git', 'add', args.config])
                         if success:
                             success, _, _ = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
                             if success:
-                                print("  • Config file committed")
+                                print("  • Committed config file with updated commit hash")
 
                                 # Push to remote after all commits are done
                                 current_branch = get_current_branch()
@@ -99,12 +98,11 @@ def main():
                                     should_push = prompt_user("Push changes to remote?", "y")
 
                                 if should_push and current_branch:
-                                    print(f"📤 Pushing {current_branch} to origin...")
                                     success, error_msg = push_to_remote(current_branch, remote="origin", force=True)
 
                                     if success:
                                         print(f"  • Successfully pushed to origin/{current_branch}")
-                                        print("    Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                                        print("🫵 Go to GitHub and create a PR from docdigest-auto-updates to main.")
                                     else:
                                         print(f"⚠️  Failed to push to remote: {error_msg}")
                                         print("⚠️  Commits are saved locally but not pushed to remote")

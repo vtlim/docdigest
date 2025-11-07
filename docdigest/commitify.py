@@ -99,13 +99,13 @@ def get_summaries_changes(old_summaries: Dict[str, str], new_summaries: Dict[str
     for var_name, new_value in new_summaries.items():
         if var_name not in old_summaries:
             changes.append({
-                "type": "added",
+                "type": "add",
                 "variable": var_name,
                 "line": f'const {var_name} = "{new_value}";'
             })
         elif old_summaries[var_name] != new_value:
             changes.append({
-                "type": "updated",
+                "type": "update",
                 "variable": var_name,
                 "line": f'const {var_name} = "{new_value}";'
             })
@@ -114,7 +114,7 @@ def get_summaries_changes(old_summaries: Dict[str, str], new_summaries: Dict[str
     for var_name in old_summaries:
         if var_name not in new_summaries:
             changes.append({
-                "type": "removed",
+                "type": "remove",
                 "variable": var_name
             })
 
@@ -219,8 +219,6 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
     Returns:
         True if all commits successful, False otherwise
     """
-    print("🔄 Starting git commit process...")
-
     # Validate git state - allow summaries file to have changes
     is_valid, error_msg = validate_git_state(allowed_files=[output_file])
     if not is_valid:
@@ -298,8 +296,6 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         print("✅ No changes detected in summaries file")
         return True
 
-    print(f"📊 Found {len(changes)} changes to commit")
-
     # Commit each change individually
     commit_hashes = []
     failed_change = None
@@ -333,7 +329,7 @@ def commit_changes(output_file: str, is_automation: bool = False) -> bool:
         return False
 
     # Success
-    print(f"  • Successfully created {len(commit_hashes)} commits")
+    print(f"  • Committed {len(commit_hashes)} summaries")
     return True
 
 
