@@ -28,14 +28,13 @@ Your task is to create concise, informative summaries for documentation pages.
 The summary will be displayed in an expandable section at the top of the documentation pages.
 
 **Instructions:**
-- For the provided content, summarize the main purpose and key information
-- Use the provided headers to understand the page structure, but don't give them disproportionate weight in the summary
-- Focus on what the reader will learn or accomplish
-- Write it for an audience of developers or technical users
-- Use plain text between 25-35 words and no special formatting
-- Use clear, accessible language that matches the original tone
-- Avoid unnecessary jargon unless it's essential to understanding
+- For the provided content, summarize the main purpose, key information, and why it's important
 - Make the summary standalone - someone should understand the page's value without reading the full content
+- Use the provided headers to understand the page structure, but don't give them disproportionate weight in the summary
+- Avoid unnecessary jargon, and don't get too detailed or too technical
+- Write it for an audience of developers or technical users
+- Use clear, accessible language that matches the original tone
+- Use plain text between 25-35 words and no special formatting
 
 **Content to summarize:**
 {content}
