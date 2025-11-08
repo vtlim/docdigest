@@ -9,6 +9,7 @@ import random
 import string
 import time
 import anthropic
+from .file_utils import parse_summaries_file
 
 # Claude model version - update when new versions are released
 CLAUDE_MODEL = "claude-sonnet-4-5-20250929"
@@ -306,6 +307,7 @@ def store_results(content: str, output_file: str) -> None:
 def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str, output_file: str) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
+    Merges new summaries with existing ones to preserve unchanged file summaries.
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
@@ -313,46 +315,58 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
         output_file: Path to output JavaScript file
 
     Returns:
-        Dictionary mapping variable names to their summaries
+        Dictionary mapping variable names to their summaries (new and existing)
     """
     if not parsed_docs:
         print("No documents to summarize.")
         return {}
 
-    summaries = {}
+    # Read existing summaries first using shared utility
+    existing_summaries = parse_summaries_file(output_file)
+    if existing_summaries:
+        print(f"  • Found {len(existing_summaries)} existing summaries")
+
+    # Generate new summaries only for parsed docs
+    new_summaries = {}
     total_input_tokens = 0
     total_output_tokens = 0
 
     for var_name, parsed_doc in parsed_docs.items():
         try:
             summary, input_tokens, output_tokens = summarize(model, parsed_doc)
-            summaries[var_name] = summary
+            new_summaries[var_name] = summary
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
             print(f"Summarized: {var_name}")
 
         except Exception as e:
             print(f"🚨 Failed to summarize {var_name}: {e}")
-            # Skip this file - don't include it in summaries
+            # Skip this file - don't include it in new_summaries
             continue
 
-    if summaries:
-        # Format and store results
-        js_content = format_results(summaries)
+    if new_summaries:
+        # Merge: existing summaries + new summaries (new ones overwrite existing)
+        all_summaries = {**existing_summaries, **new_summaries}
+
+        # Format and store results (all summaries)
+        js_content = format_results(all_summaries)
         store_results(js_content, output_file)
 
         # Show summary statistics
-        print(f"  • Documents processed: {len(summaries)}")
+        print(f"  • Documents processed: {len(new_summaries)}")
+        print(f"  • Total summaries in file: {len(all_summaries)}")
 
         if model == "claude":
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)
             print(f"  • Total input tokens: {total_input_tokens:,}")
             print(f"  • Total output tokens: {total_output_tokens:,}")
             print(f"  • Total cost: ${total_cost:.4f}")
-    else:
-        print("🚨 No summaries generated due to errors")
 
-    return summaries
+        return all_summaries
+    else:
+        print("🚨 No new summaries generated due to errors")
+        # Return existing summaries even if no new ones were generated
+        return existing_summaries
 
 
 if __name__ == "__main__":
