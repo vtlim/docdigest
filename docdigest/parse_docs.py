@@ -5,87 +5,12 @@ Uses mrkdwn_analysis to extract content from Markdown files and tracks changes v
 
 import os
 import json
-import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
 from .config import load_config, save_config
 from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, get_variable_name
-from .git_utils import is_git_repository, get_git_changed_files
-
-
-def get_current_commit_hash() -> str:
-    """
-    Get the current git commit hash.
-
-    Returns:
-        Current commit hash as string
-    """
-    try:
-        result = subprocess.run(
-            ['git', 'rev-parse', 'HEAD'],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        raise RuntimeError("🚨 Failed to get current git commit hash")
-
-
-def is_git_repository() -> bool:
-    """
-    Check if current directory is a git repository.
-
-    Returns:
-        True if git repo exists, False otherwise
-    """
-    try:
-        result = subprocess.run(
-            ['git', 'rev-parse', '--git-dir'],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        return False
-
-
-def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
-    """
-    Get list of changed Markdown files from git since specified commit.
-
-    Args:
-        directory: Directory to scan for files
-        since_commit: Git commit hash to compare against
-
-    Returns:
-        List of changed markdown file paths (no exclusions applied)
-    """
-    try:
-        # Get changed files since the specified commit
-        result = subprocess.run(
-            ['git', 'diff', '--name-only', f'{since_commit}..HEAD'],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        changed_files = result.stdout.strip().split('\n')
-
-        # Filter for markdown files in the specified directory
-        markdown_files = []
-        for file_path in changed_files:
-            if (file_path.endswith('.md') and
-                file_path.startswith(directory) and
-                os.path.exists(file_path)):
-                markdown_files.append(file_path)
-
-        return markdown_files
-
-    except subprocess.CalledProcessError:
-        raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
+from .git_utils import is_git_repository, get_git_changed_files, run_git_command
 
 
 def get_exclude_config_from_commit(config_path: str, commit_hash: str) -> Optional[Dict]:
@@ -99,30 +24,39 @@ def get_exclude_config_from_commit(config_path: str, commit_hash: str) -> Option
     Returns:
         Exclude config dict from that commit, or None if not found
     """
-    try:
-        result = subprocess.run(
-            ['git', 'show', f'{commit_hash}:{config_path}'],
-            capture_output=True,
-            text=True,
-            check=True
-        )
+    success, stdout, _ = run_git_command(['git', 'show', f'{commit_hash}:{config_path}'])
 
-        config_at_commit = json.loads(result.stdout)
-        return config_at_commit.get('exclude', {})
-    except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError):
+    if not success:
         return None
+
+    try:
+        config_at_commit = json.loads(stdout)
+        return config_at_commit.get('exclude', {})
+    except json.JSONDecodeError:
+        return None
+
+
+def has_exclude_config_changed(current_exclude: Dict, config_path: str, commit_hash: Optional[str]) -> bool:
     """
-    Check if the exclude configuration has changed.
+    Check if the exclude configuration has changed since the last commit.
 
     Args:
         current_exclude: Current exclude configuration
-        last_exclude: Last saved exclude configuration
+        config_path: Path to the config file
+        commit_hash: Git commit hash to compare against
 
     Returns:
-        True if config has changed, False otherwise
+        True if config has changed or can't be determined, False if unchanged
     """
+    if commit_hash is None:
+        # No commit to compare against, assume changed
+        return True
+
+    last_exclude = get_exclude_config_from_commit(config_path, commit_hash)
+
     if last_exclude is None:
-        return current_exclude != {}
+        # Couldn't get previous config, assume changed to be safe
+        return True
 
     # Compare as JSON strings for easy comparison
     return json.dumps(current_exclude, sort_keys=True) != json.dumps(last_exclude, sort_keys=True)
