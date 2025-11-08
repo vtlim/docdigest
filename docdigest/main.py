@@ -73,7 +73,7 @@ def main():
                 should_push = True
 
             if not should_commit:
-                print("⭐️ Skipping commit stage")
+                print("  • Skipping commit stage")
             else:
                 print("\n📦 Committing changes...")
                 commit_success = commit_changes(output_file, args.config, is_automation=args.automation, should_push=should_push)
