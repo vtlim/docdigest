@@ -19,6 +19,7 @@ from .git_utils import (
     delete_branch,
     branch_exists
 )
+from .file_utils import parse_summaries_file
 
 # Consistent branch name for all docdigest updates
 DOCDIGEST_BRANCH_NAME = "docdigest-auto-updates"
@@ -46,42 +47,6 @@ def create_backup(file_path: str) -> Optional[str]:
     except Exception as e:
         print(f"🚨 Failed to create backup: {e}")
         return None
-
-
-def parse_summaries_file(file_path: str) -> Dict[str, str]:
-    """
-    Parse summaries.js file and extract variable:value pairs.
-
-    Args:
-        file_path: Path to summaries.js file
-
-    Returns:
-        Dictionary mapping variable names to their summary values
-    """
-    if not os.path.exists(file_path):
-        return {}
-
-    summaries = {}
-
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            for line in file:
-                # Match lines like: const variable_name = "summary text";
-                if line.strip().startswith('const '):
-                    parts = line.split('=', 1)
-                    if len(parts) == 2:
-                        var_name = parts[0].replace('const', '').strip()
-                        # Extract value between quotes
-                        value_part = parts[1].strip()
-                        if '"' in value_part:
-                            value = value_part.split('"')[1]
-                            summaries[var_name] = value
-    except Exception as e:
-        print(f"🚨 Error parsing summaries file: {e}")
-
-    return summaries
-
-
 def write_summaries_file(file_path: str, summaries: Dict[str, str]) -> bool:
     """
     Write summaries dictionary to the summaries.js file.

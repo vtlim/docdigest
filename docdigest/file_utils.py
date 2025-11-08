@@ -173,6 +173,41 @@ def get_variable_name(filepath: str, base_directory: str) -> str:
     return name or "unnamed_doc"
 
 
+def parse_summaries_file(file_path: str) -> Dict[str, str]:
+    """
+    Parse summaries.js file and extract variable:value pairs.
+
+    Args:
+        file_path: Path to summaries.js file
+
+    Returns:
+        Dictionary mapping variable names to their summary values
+    """
+    if not os.path.exists(file_path):
+        return {}
+
+    summaries = {}
+
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            for line in file:
+                # Match lines like: const variable_name = "summary text";
+                if line.strip().startswith('const '):
+                    parts = line.split('=', 1)
+                    if len(parts) == 2:
+                        var_name = parts[0].replace('const', '').strip()
+                        # Extract value between quotes
+                        value_part = parts[1].strip()
+                        if '"' in value_part:
+                            value = value_part.split('"')[1]
+                            summaries[var_name] = value
+    except Exception as e:
+        print(f"⚠️  Warning: Could not parse summaries file: {e}")
+        return {}
+
+    return summaries
+
+
 if __name__ == "__main__":
     # Example usage
     import json
