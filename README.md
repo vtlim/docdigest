@@ -92,6 +92,9 @@ More advanced configuration:
 }
 ```
 
+
+### File exclusions
+
 To avoid summarizing certain files, list them in the `exclude` field.
 You can specify exclusions by regex patterns, file names, and directory names.
 Define exclusions relative to `directory`.
@@ -106,6 +109,10 @@ Additional exclude examples:
   }
 ```
 
+When files get removed from `exclude`, i.e., they're newly included,
+then `docdigest` will summarize those files even if they're not changed.
+In other words, when you have a commit specified in the configuration file,
+`docdigest` summarizes both changed files and files that no longer get excluded.
 
 ### Debug mode
 

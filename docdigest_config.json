@@ -3,7 +3,7 @@
   "output_file": "example-docs/static/js/summaries.js",
   "exclude": {
     "patterns": [
-      "tutorial**"
+      "tutorial-basics"
     ]
   },
   "commit": "a06d2ea7ec39e654991bc90cc29e142573c437fc"

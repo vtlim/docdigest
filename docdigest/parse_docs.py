@@ -4,6 +4,7 @@ Uses mrkdwn_analysis to extract content from Markdown files and tracks changes v
 """
 
 import os
+import json
 import subprocess
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -52,8 +53,6 @@ def is_git_repository() -> bool:
 
 
 def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
-
-
     """
     Get list of changed Markdown files from git since specified commit.
 
@@ -89,7 +88,47 @@ def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
         raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
 
 
-def get_files_to_process(directory: str, last_commit: Optional[str], exclude_config: Dict = None) -> List[str]:
+def get_exclude_config_from_commit(config_path: str, commit_hash: str) -> Optional[Dict]:
+    """
+    Get the exclude configuration from a specific git commit.
+
+    Args:
+        config_path: Path to the config file
+        commit_hash: Git commit hash to retrieve from
+
+    Returns:
+        Exclude config dict from that commit, or None if not found
+    """
+    try:
+        result = subprocess.run(
+            ['git', 'show', f'{commit_hash}:{config_path}'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+
+        config_at_commit = json.loads(result.stdout)
+        return config_at_commit.get('exclude', {})
+    except (subprocess.CalledProcessError, json.JSONDecodeError, FileNotFoundError):
+        return None
+    """
+    Check if the exclude configuration has changed.
+
+    Args:
+        current_exclude: Current exclude configuration
+        last_exclude: Last saved exclude configuration
+
+    Returns:
+        True if config has changed, False otherwise
+    """
+    if last_exclude is None:
+        return current_exclude != {}
+
+    # Compare as JSON strings for easy comparison
+    return json.dumps(current_exclude, sort_keys=True) != json.dumps(last_exclude, sort_keys=True)
+
+
+def get_files_to_process(directory: str, last_commit: Optional[str], exclude_config: Dict = None, config_path: str = None) -> List[str]:
     """
     Get list of markdown files to process based on git changes and exclusion rules.
 
@@ -97,6 +136,7 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         directory: Directory to scan for files
         last_commit: Git commit hash to compare against (None for all files)
         exclude_config: Configuration dictionary for files to exclude
+        config_path: Path to config file (for checking exclude config changes)
 
     Returns:
         List of file paths to process
@@ -106,25 +146,59 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
     """
     exclude_config = exclude_config or {}
 
+    # Check if exclude config has changed (if we have a commit to compare against)
+    exclude_changed = False
+    old_exclude_config = None
+    if config_path and last_commit:
+        old_exclude_config = get_exclude_config_from_commit(config_path, last_commit)
+        if old_exclude_config is not None:
+            exclude_changed = json.dumps(exclude_config, sort_keys=True) != json.dumps(old_exclude_config, sort_keys=True)
+
+    if exclude_changed:
+        print("ℹ️  Exclude configuration changed")
+
     # If commit hash is provided, git must be available
     if last_commit is not None:
         if not is_git_repository():
             raise RuntimeError("Commit hash provided but not in a git repository. Please initialize git or remove commit hash from config.")
 
-    # Step 1: Get files based on git status
+    # Step 1: Get files based on git status or exclude config changes
     if last_commit is None:
-        # No commit hash - get all files (don't require git)
+        # No commit hash - get all files
         try:
             all_files = get_all_markdown_files(directory)
         except Exception as e:
             # Fall back to all files if any error
             print(f"⚠️  Warning: Error during file discovery, processing all files: {e}")
             all_files = get_all_markdown_files(directory)
+    elif exclude_changed and old_exclude_config is not None:
+        # Exclude config changed - get changed files PLUS newly included files
+        changed_files = get_git_changed_files(directory, last_commit)
+
+        # Get all files to find newly included ones
+        all_files = get_all_markdown_files(directory)
+
+        # Find files that were excluded before but not now
+        newly_included_files = []
+        for file_path in all_files:
+            was_excluded = should_exclude_file(file_path, old_exclude_config, directory)
+            is_excluded = should_exclude_file(file_path, exclude_config, directory)
+
+            if was_excluded and not is_excluded:
+                newly_included_files.append(file_path)
+
+        # Combine changed files with newly included files (remove duplicates)
+        all_files = list(set(changed_files + newly_included_files))
+
+        if newly_included_files:
+            print(f"  • Found {len(newly_included_files)} newly included files")
+        if changed_files:
+            print(f"  • Found {len(changed_files)} changed files")
     else:
-        # Commit hash provided - git must work
+        # Commit hash provided and exclude unchanged - only get changed files
         all_files = get_git_changed_files(directory, last_commit)
 
-    # Step 2: Apply exclusion filters
+    # Step 2: Apply current exclusion filters
     filtered_files = filter_excluded_files(all_files, exclude_config, directory)
 
     return filtered_files
@@ -224,8 +298,8 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
     config = load_config(config_path)
     exclude_config = config.get('exclude', {})
 
-    # Get list of files to process (git changes + exclusions)
-    files_to_process = get_files_to_process(directory, last_commit, exclude_config)
+    # Get list of files to process (git changes + exclusions + exclude config changes)
+    files_to_process = get_files_to_process(directory, last_commit, exclude_config, config_path)
 
     if not files_to_process:
         print("No Markdown files found to process.")
