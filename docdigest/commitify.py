@@ -47,6 +47,8 @@ def create_backup(file_path: str) -> Optional[str]:
     except Exception as e:
         print(f"🚨 Failed to create backup: {e}")
         return None
+
+
 def write_summaries_file(file_path: str, summaries: Dict[str, str]) -> bool:
     """
     Write summaries dictionary to the summaries.js file.
@@ -116,22 +118,32 @@ def get_summaries_changes(old_summaries: Dict[str, str], new_summaries: Dict[str
     return changes
 
 
-def commit_individual_change(file_path: str, change: Dict) -> tuple[bool, Optional[str]]:
+def commit_individual_change(file_path: str, change: Dict, variable_name: str, markdown_files: Dict[str, str]) -> tuple[bool, Optional[str]]:
     """
-    Create individual commit for a single change.
+    Create individual commit for a single change, including corresponding markdown file.
 
     Args:
-        file_path: Path to the file being committed
+        file_path: Path to the summaries file being committed
         change: Change dictionary from get_summaries_changes()
+        variable_name: Variable name of the summary
+        markdown_files: Dictionary mapping variable names to markdown file paths
 
     Returns:
         Tuple of (success: bool, commit_hash: Optional[str])
     """
-    # Stage the file
+    # Stage the summaries file
     success, _, stderr = run_git_command(['git', 'add', file_path])
     if not success:
         print(f"🚨 Failed to stage file: {stderr}")
         return False, None
+
+    # Stage the corresponding markdown file if it exists
+    markdown_file = markdown_files.get(variable_name)
+    if markdown_file and os.path.exists(markdown_file):
+        success, _, stderr = run_git_command(['git', 'add', markdown_file])
+        if not success:
+            print(f"⚠️  Failed to stage markdown file {markdown_file}: {stderr}")
+            # Continue anyway - summaries file is more important
 
     # Create commit message
     change_type = change["type"].capitalize()
@@ -205,7 +217,7 @@ def prompt_user(question: str, default: str = "n") -> bool:
 
 def commit_changes(output_file: str, config_path: str, is_automation: bool = False, should_push: bool = False) -> bool:
     """
-    Main function to commit changes to summaries file and config file.
+    Main function to commit changes to summaries file, markdown files, and config file.
 
     Args:
         output_file: Path to summaries.js file
@@ -216,11 +228,8 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
     Returns:
         True if all commits successful, False otherwise
     """
-    # Validate git state - allow summaries file and config file to have changes
-    is_valid, error_msg = validate_git_state(allowed_files=[output_file, config_path])
-    if not is_valid:
-        print(f"🚨 {error_msg}")
-        return False
+    # Don't validate git state - we expect markdown files to be modified
+    # The branch creation will handle ensuring we're in a clean state
 
     # Capture original branch to restore at the end
     original_branch = get_current_branch()
@@ -263,6 +272,19 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
                 if not create_branch(DOCDIGEST_BRANCH_NAME):
                     print("🚨 Failed to create branch. Aborting.")
                     return False
+
+        # Build mapping of variable names to markdown file paths
+        from .config import load_config
+        config = load_config(config_path)
+        directory = config.get('directory', '')
+
+        # Get all markdown files and build variable name mapping
+        from .file_utils import get_all_markdown_files, get_variable_name
+        all_markdown_files = get_all_markdown_files(directory) if directory else []
+        markdown_file_map = {}
+        for md_file in all_markdown_files:
+            var_name = get_variable_name(md_file, directory)
+            markdown_file_map[var_name] = md_file
 
         # Parse old and new summaries
         # First, get the version from git
@@ -316,8 +338,8 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
                 failed_change = change
                 break
 
-            # Now commit this single change
-            success, commit_hash = commit_individual_change(output_file, change)
+            # Now commit this single change along with corresponding markdown file
+            success, commit_hash = commit_individual_change(output_file, change, variable, markdown_file_map)
 
             if not success:
                 failed_change = change
@@ -340,26 +362,29 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
 
             return False
 
-        # Success - now commit the config file
+        # Success - now commit any remaining changes (config file and any orphaned markdown files)
         print(f"  • Committed {len(commit_hashes)} summaries")
 
-        # Update and commit config file
-        from .config import load_config, save_config
+        # Update config file with current commit hash
+        from .config import save_config
         config = load_config(config_path)
         current_commit = get_current_commit_hash()
         config['commit'] = current_commit
         save_config(config_path, config)
 
-        # Commit the config file
-        success, _, _ = run_git_command(['git', 'add', config_path])
-        if success:
-            success, _, stderr = run_git_command(['git', 'commit', '-m', 'Update docdigest config with latest commit hash'])
+        # Check if there are any remaining uncommitted changes (config + orphaned markdown files)
+        success, status_output, _ = run_git_command(['git', 'status', '--porcelain'])
+        if success and status_output:
+            # Stage and commit remaining files
+            success, _, stderr = run_git_command(['git', 'add', '-A'])
             if success:
-                print("  • Committed config file with updated commit hash")
+                success, _, stderr = run_git_command(['git', 'commit', '-m', 'Update config and remaining files'])
+                if success:
+                    print("  • Committed config and remaining changes")
+                else:
+                    print(f"⚠️  Failed to commit remaining files: {stderr}")
             else:
-                print(f"⚠️  Failed to commit config file: {stderr}")
-        else:
-            print("⚠️  Failed to stage config file")
+                print(f"⚠️  Failed to stage remaining files: {stderr}")
 
         # Push to remote if requested (before switching branches)
         if should_push:
@@ -374,7 +399,7 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
                     print("👉 Go to GitHub and create a PR from docdigest-auto-updates to main.")
                 else:
                     print(f"⚠️  Failed to push to remote: {error_msg}")
-                    print("⚠️  Commits are saved locally but not pushed to remote")
+                    print(f"⚠️  Commits are saved locally but not pushed to remote")
 
         return True
 
