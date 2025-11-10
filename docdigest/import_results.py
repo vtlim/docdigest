@@ -6,7 +6,12 @@ Modifies Markdown files to add/remove import statements and summary UI component
 import os
 import re
 from typing import Dict, List, Optional
-from .file_utils import get_all_markdown_files, should_exclude_file, get_variable_name
+from .file_utils import (
+    get_all_markdown_files,
+    should_exclude_file,
+    get_variable_name,
+    extract_frontmatter_and_content
+)
 from .config import load_config
 
 
@@ -27,29 +32,6 @@ def convert_output_file_to_import_path(output_file: str) -> str:
 
     # Always use @site/static/js/ prefix with the extracted filename
     return f"@site/static/js/{filename}"
-
-
-def extract_frontmatter_and_content(file_content: str) -> tuple[str, str, str]:
-    """
-    Extract frontmatter and content from markdown file.
-
-    Args:
-        file_content: Full markdown file content
-
-    Returns:
-        Tuple of (frontmatter_block, content_after_frontmatter, full_remaining_content)
-    """
-    # Match frontmatter pattern: starts with ---, content, ends with ---
-    frontmatter_pattern = r'^(---\s*\n.*?\n---\s*\n)(.*?)$'
-    match = re.match(frontmatter_pattern, file_content, re.DOTALL)
-
-    if match:
-        frontmatter = match.group(1)
-        remaining_content = match.group(2)
-        return frontmatter, remaining_content, remaining_content
-    else:
-        # No frontmatter found - this shouldn't happen based on assumptions
-        return "", file_content, file_content
 
 
 def has_existing_summary_component(content: str, variable_name: str) -> bool:
@@ -149,8 +131,8 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
         frontmatter, after_frontmatter, _ = extract_frontmatter_and_content(original_content)
 
         if not frontmatter:
-            print(f"🚨 Frontmatter not found in {filepath}, skipping")
-            return "error"
+            # Skip files without frontmatter - they shouldn't be in the summaries
+            return "unchanged"
 
         # Check current state
         currently_has_component = has_existing_summary_component(after_frontmatter, variable_name)

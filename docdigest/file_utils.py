@@ -99,6 +99,49 @@ def filter_excluded_files(files: List[str], exclude_config: Dict, base_directory
     return filtered_files
 
 
+def extract_frontmatter_and_content(file_content: str) -> tuple[str, str, str]:
+    """
+    Extract frontmatter and content from markdown file content.
+
+    Args:
+        file_content: Full markdown file content
+
+    Returns:
+        Tuple of (frontmatter_block, content_after_frontmatter, full_remaining_content)
+    """
+    # Match frontmatter pattern: starts with ---, content, ends with ---
+    frontmatter_pattern = r'^(---\s*\n.*?\n---\s*\n)(.*?)$'
+    match = re.match(frontmatter_pattern, file_content, re.DOTALL)
+
+    if match:
+        frontmatter = match.group(1)
+        remaining_content = match.group(2)
+        return frontmatter, remaining_content, remaining_content
+    else:
+        # No frontmatter found
+        return "", file_content, file_content
+
+
+def has_frontmatter(filepath: str) -> bool:
+    """
+    Check if a Markdown file has YAML frontmatter.
+
+    Args:
+        filepath: Path to the markdown file
+
+    Returns:
+        True if frontmatter exists, False otherwise
+    """
+    try:
+        with open(filepath, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        frontmatter, _, _ = extract_frontmatter_and_content(content)
+        return frontmatter != ""
+    except Exception:
+        return False
+
+
 def extract_frontmatter_id(filepath: str) -> Optional[str]:
     """
     Extract the 'id' field from YAML frontmatter in a Markdown file.
@@ -113,16 +156,15 @@ def extract_frontmatter_id(filepath: str) -> Optional[str]:
         with open(filepath, 'r', encoding='utf-8') as file:
             content = file.read()
 
-        # Match YAML frontmatter between --- markers
-        frontmatter_match = re.match(r'^---\s*\n(.*?)\n---\s*\n', content, re.DOTALL)
+        frontmatter_block, _, _ = extract_frontmatter_and_content(content)
 
-        if not frontmatter_match:
+        if not frontmatter_block:
             return None
 
-        frontmatter = frontmatter_match.group(1)
+        # Look for id: value line in the frontmatter content (strip the --- markers)
+        frontmatter_content = frontmatter_block.strip().strip('-').strip()
 
-        # Look for id: value line
-        id_match = re.search(r'^id:\s*(.+)$', frontmatter, re.MULTILINE)
+        id_match = re.search(r'^id:\s*(.+)$', frontmatter_content, re.MULTILINE)
 
         if id_match:
             # Extract and clean the id value (remove quotes if present)

@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
 from .config import load_config, save_config
-from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, get_variable_name
+from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, get_variable_name, has_frontmatter
 from .git_utils import is_git_repository, get_git_changed_files, run_git_command
 
 
@@ -124,9 +124,10 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         # Combine changed files with newly included files (remove duplicates)
         all_files = list(set(changed_files + newly_included_files))
 
-        print(f"  • Found {len(changed_files)} git-changed files")
-        print(f"  • Found {len(newly_included_files)} newly included files")
-        print(f"  • Total files to process: {len(all_files)}")
+        if newly_included_files:
+            print(f"  • Found {len(newly_included_files)} newly included files")
+        if changed_files:
+            print(f"  • Found {len(changed_files)} changed files")
     else:
         # Commit hash provided and exclude unchanged - only get changed files
         all_files = get_git_changed_files(directory, last_commit)
@@ -243,6 +244,11 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
 
     for filepath in files_to_process:
         try:
+            # Check if file has frontmatter before processing
+            if not has_frontmatter(filepath):
+                print(f"⚠️  Skipping {filepath}: no frontmatter found")
+                continue
+
             variable_name = get_variable_name(filepath, directory)
             parsed_content = parse_doc(filepath)
             content_dict[variable_name] = parsed_content
