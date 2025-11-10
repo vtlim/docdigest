@@ -3,8 +3,11 @@
   "output_file": "example-docs/static/js/summaries.js",
   "exclude": {
     "directories": [
-      "tutorial-basics"
+      "tutorial-extras"
+    ],
+    "files": [
+      "intro.md"
     ]
   },
-  "commit": "744ef6ec65a92c9d4f1e7167bfef24965322d56c"
+  "commit": "36ec439db04ed214c1aeace39b0229bfedab9dfd"
 }
