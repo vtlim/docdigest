@@ -4,10 +4,7 @@
   "exclude": {
     "directories": [
       "tutorial-extras"
-    ],
-    "files": [
-      "intro.md"
     ]
   },
-  "commit": "36ec439db04ed214c1aeace39b0229bfedab9dfd"
+  "commit": "33a9f68f8c45952b7604960586ab9d8a0de092b1"
 }
