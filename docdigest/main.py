@@ -34,26 +34,42 @@ def main():
             config.get('commit'),  # optional field, may not exist on first run
             args.config
         )
-        print(f"Found {len(parsed_docs)} changed files")
+        print(f"Found {len(parsed_docs)} files to process")
 
-        if not parsed_docs:
-            print("No changes detected. Exiting.")
-            return
+        # Even if no new summaries needed, we may need to update imports if exclusions changed
+        # So don't exit early - continue to update_markdown_imports
 
         # Dry-run mode: estimate costs and exit
         if args.dry_run:
-            from .summarize import estimate_costs
-            estimate_costs(parsed_docs, args.model)
+            if parsed_docs:
+                from .summarize import estimate_costs
+                estimate_costs(parsed_docs, args.model)
+            else:
+                print("No files to estimate costs for")
             return
 
-        print(f"\n🤖 Generating summaries using {args.model} model...")
-        summaries = generate_summaries(
-            parsed_docs=parsed_docs,
-            model=args.model,
-            output_file=output_file
-        )
+        # Generate summaries only if there are files to process
+        if parsed_docs:
+            print(f"\n🤖 Generating summaries using {args.model} model...")
+            summaries = generate_summaries(
+                parsed_docs=parsed_docs,
+                model=args.model,
+                output_file=output_file,
+                config_path=args.config
+            )
+        else:
+            # No new summaries to generate, but filter existing ones for exclusions
+            print(f"\n🧹 No new summaries to generate, cleaning up excluded summaries...")
+            summaries = generate_summaries(
+                parsed_docs={},
+                model=args.model,
+                output_file=output_file,
+                config_path=args.config
+            )
+            print(f"Loaded {len(summaries)} summaries after filtering")
 
-        print("\n📝 Adding imports to Markdown files...")
+        # Always update markdown imports (to add new ones or remove old ones)
+        print("\n📝 Updating markdown file imports...")
         update_markdown_imports(summaries, args.config)
 
         # Commit changes if summaries were generated

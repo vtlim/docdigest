@@ -304,24 +304,26 @@ def store_results(content: str, output_file: str) -> None:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
 
-def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str, output_file: str) -> Dict[str, str]:
+def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str, output_file: str, config_path: str = None) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
     Merges new summaries with existing ones to preserve unchanged file summaries.
+    Removes summaries for excluded files.
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
         model: Model to use for summarization ("debug" or "claude")
         output_file: Path to output JavaScript file
+        config_path: Optional path to config file (for checking exclusions)
 
     Returns:
-        Dictionary mapping variable names to their summaries (new and existing)
+        Dictionary mapping variable names to their summaries (new and existing, minus excluded)
     """
-    if not parsed_docs:
+    if not parsed_docs and not config_path:
         print("No documents to summarize.")
         return {}
 
-    # Read existing summaries first using shared utility
+    # Read existing summaries first
     existing_summaries = parse_summaries_file(output_file)
     if existing_summaries:
         print(f"  • Found {len(existing_summaries)} existing summaries")
@@ -344,19 +346,48 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
             # Skip this file - don't include it in new_summaries
             continue
 
-    if new_summaries:
-        # Merge: existing summaries + new summaries (new ones overwrite existing)
-        all_summaries = {**existing_summaries, **new_summaries}
+    # Merge: existing summaries + new summaries (new ones overwrite existing)
+    all_summaries = {**existing_summaries, **new_summaries}
 
+    # Filter out summaries for excluded files
+    if config_path:
+        from .config import load_config
+        from .file_utils import get_all_markdown_files, get_variable_name, should_exclude_file
+
+        config = load_config(config_path)
+        directory = config.get('directory', '')
+        exclude_config = config.get('exclude', {})
+
+        if directory and exclude_config:
+            # Build set of variable names for non-excluded files
+            all_markdown_files = get_all_markdown_files(directory)
+            valid_var_names = set()
+
+            for md_file in all_markdown_files:
+                if not should_exclude_file(md_file, exclude_config, directory):
+                    var_name = get_variable_name(md_file, directory)
+                    valid_var_names.add(var_name)
+
+            # Remove summaries for excluded files
+            excluded_summaries = {k: v for k, v in all_summaries.items() if k in valid_var_names}
+            removed_count = len(all_summaries) - len(excluded_summaries)
+
+            if removed_count > 0:
+                print(f"  • Removed {removed_count} summaries for excluded files")
+
+            all_summaries = excluded_summaries
+
+    if new_summaries or all_summaries:
         # Format and store results (all summaries)
         js_content = format_results(all_summaries)
         store_results(js_content, output_file)
 
         # Show summary statistics
-        print(f"  • Documents processed: {len(new_summaries)}")
+        if new_summaries:
+            print(f"  • Documents processed: {len(new_summaries)}")
         print(f"  • Total summaries in file: {len(all_summaries)}")
 
-        if model == "claude":
+        if model == "claude" and new_summaries:
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)
             print(f"  • Total input tokens: {total_input_tokens:,}")
             print(f"  • Total output tokens: {total_output_tokens:,}")
@@ -364,9 +395,8 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
 
         return all_summaries
     else:
-        print("🚨 No new summaries generated due to errors")
-        # Return existing summaries even if no new ones were generated
-        return existing_summaries
+        print("🚨 No summaries generated or existing")
+        return {}
 
 
 if __name__ == "__main__":
