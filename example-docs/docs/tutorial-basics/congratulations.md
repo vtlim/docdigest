@@ -2,22 +2,6 @@
 sidebar_position: 6
 ---
 
-import {congratulations} from "@site/static/js/summaries.js"
-
-
-<details open>
-<summary>Summary</summary>
-
-{congratulations}
-
-<br/><br/>
-<span className="small-font">
-This summary was generated using AI.
-Check important info for mistakes.
-</span>
-
-</details>
-
 # Congratulations!
 
 You have just learned the **basics of Docusaurus** and made some changes to the **initial template**.
