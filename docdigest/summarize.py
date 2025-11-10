@@ -288,18 +288,22 @@ def format_results(summaries: Dict[str, str]) -> str:
     return js_content
 
 
-def store_results(content: str, output_file: str) -> None:
+def store_results(content: str, output_file: str, is_update: bool = False) -> None:
     """
     Write formatted results to specified file.
 
     Args:
         content: JavaScript module content to write
         output_file: Path to output file
+        is_update: If True, this is updating existing file rather than writing new summaries
     """
     try:
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(content)
-        print(f"Summaries written to: {output_file}")
+        if not is_update:
+            print(f"Summaries written to: {output_file}")
+        else:
+            print(f"Updated summaries file: {output_file}")
     except Exception as e:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
@@ -380,12 +384,16 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
     if new_summaries or all_summaries:
         # Format and store results (all summaries)
         js_content = format_results(all_summaries)
-        store_results(js_content, output_file)
+        is_update_only = len(new_summaries) == 0
+        store_results(js_content, output_file, is_update=is_update_only)
 
         # Show summary statistics
         if new_summaries:
             print(f"  • Documents processed: {len(new_summaries)}")
-        print(f"  • Total summaries in file: {len(all_summaries)}")
+            print(f"  • Total summaries in file: {len(all_summaries)}")
+        else:
+            print(f"  • No new summaries generated")
+            print(f"  • Total summaries in file: {len(all_summaries)}")
 
         if model == "claude" and new_summaries:
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)
