@@ -85,7 +85,7 @@ def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
     """
     import os
 
-    success, stdout, _ = run_git_command(['git', 'diff', '--name-only', f'{since_commit}..HEAD'])
+    success, stdout, _ = run_git_command(['git', 'diff', '--name-only', f'{since_commit}'])
 
     if not success:
         raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")

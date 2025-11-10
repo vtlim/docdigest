@@ -38,8 +38,6 @@ def main():
             print("\n✅ Pipeline completed successfully!")
             return
 
-        print(f"Found {len(parsed_docs)} files to process")
-
         # Even if no new summaries needed, we may need to update imports if exclusions changed
         # So don't exit early - continue to update_markdown_imports
 
