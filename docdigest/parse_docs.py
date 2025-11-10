@@ -124,10 +124,9 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         # Combine changed files with newly included files (remove duplicates)
         all_files = list(set(changed_files + newly_included_files))
 
-        if newly_included_files:
-            print(f"  • Found {len(newly_included_files)} newly included files")
-        if changed_files:
-            print(f"  • Found {len(changed_files)} changed files")
+        print(f"  • Found {len(changed_files)} git-changed files")
+        print(f"  • Found {len(newly_included_files)} newly included files")
+        print(f"  • Total files to process: {len(all_files)}")
     else:
         # Commit hash provided and exclude unchanged - only get changed files
         all_files = get_git_changed_files(directory, last_commit)
