@@ -34,6 +34,10 @@ def main():
             config.get('commit'),  # optional field, may not exist on first run
             args.config
         )
+        if len(parsed_docs) == 0:
+            print("\n✅ Pipeline completed successfully!")
+            return
+
         print(f"Found {len(parsed_docs)} files to process")
 
         # Even if no new summaries needed, we may need to update imports if exclusions changed
@@ -51,7 +55,7 @@ def main():
         # Generate summaries only if there are files to process
         if parsed_docs:
             print(f"\n🤖 Generating summaries using {args.model} model...")
-            summaries = generate_summaries(
+            summaries, changes_to_commit = generate_summaries(
                 parsed_docs=parsed_docs,
                 model=args.model,
                 output_file=output_file,
@@ -59,21 +63,21 @@ def main():
             )
         else:
             # No new summaries to generate, but filter existing ones for exclusions
-            print(f"\n🧹 No new summaries to generate, cleaning up excluded summaries...")
-            summaries = generate_summaries(
+            print(f"\n🧹 No new summaries to generate, cleaning up any excluded summaries...")
+            summaries, changes_to_commit = generate_summaries(
                 parsed_docs={},
                 model=args.model,
                 output_file=output_file,
                 config_path=args.config
             )
-            print(f"Loaded {len(summaries)} summaries after filtering")
 
-        # Always update markdown imports (to add new ones or remove old ones)
-        print("\n📝 Updating markdown file imports...")
-        update_markdown_imports(summaries, args.config)
+        print(f"Summaries are in {output_file}")
 
-        # Commit changes if summaries were generated
-        if summaries:
+        # Update markdown imports (to add new ones or remove old ones)
+        if changes_to_commit:
+            print("\n📝 Updating markdown file imports...")
+            update_markdown_imports(summaries, args.config)
+
             # In interactive mode, ask if user wants to commit and push
             should_commit = True
             should_push = False

@@ -112,6 +112,9 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         # Get all files to find newly included ones
         all_files = get_all_markdown_files(directory)
 
+        print(f"  • Config change: old exclude = {old_exclude_config}")
+        print(f"  • Config change: new exclude = {exclude_config}")
+
         # Find files that were excluded before but not now
         newly_included_files = []
         for file_path in all_files:
@@ -236,7 +239,7 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
     files_to_process = get_files_to_process(directory, last_commit, exclude_config, config_path)
 
     if not files_to_process:
-        print("No Markdown files found to process.")
+        print("No Markdown files changed, excluded, or included.")
         return {}
 
     # Parse each file and build content dictionary

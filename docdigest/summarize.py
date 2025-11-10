@@ -322,17 +322,18 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
 
     Returns:
         Dictionary mapping variable names to their summaries (new and existing, minus excluded)
+        Boolean of whether or not changes were detected to determine whether to do git actions
     """
     if not parsed_docs and not config_path:
         print("No documents to summarize.")
-        return {}
+        return {}, False
 
     # Read existing summaries first
     existing_summaries = parse_summaries_file(output_file)
     if existing_summaries:
         print(f"  • Found {len(existing_summaries)} existing summaries")
 
-    # Generate new summaries only for parsed docs
+    # Generate new summaries only for parsed or new docs
     new_summaries = {}
     total_input_tokens = 0
     total_output_tokens = 0
@@ -381,6 +382,11 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
 
             all_summaries = excluded_summaries
 
+    # If there aren't new or removed summaries, skip ahead
+    if all_summaries == existing_summaries:
+        print(f"  • No summaries changed")
+        return all_summaries, False
+
     if new_summaries or all_summaries:
         # Format and store results (all summaries)
         js_content = format_results(all_summaries)
@@ -391,9 +397,6 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
         if new_summaries:
             print(f"  • Documents processed: {len(new_summaries)}")
             print(f"  • Total summaries in file: {len(all_summaries)}")
-        else:
-            print(f"  • No new summaries generated")
-            print(f"  • Total summaries in file: {len(all_summaries)}")
 
         if model == "claude" and new_summaries:
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)
@@ -401,10 +404,10 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
             print(f"  • Total output tokens: {total_output_tokens:,}")
             print(f"  • Total cost: ${total_cost:.4f}")
 
-        return all_summaries
+        return all_summaries, True
     else:
         print("🚨 No summaries generated or existing")
-        return {}
+        return {}, False
 
 
 if __name__ == "__main__":

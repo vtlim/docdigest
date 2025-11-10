@@ -49,11 +49,7 @@ def has_existing_summary_component(content: str, variable_name: str) -> bool:
     import_pattern = rf'import\s+{{\s*{variable_name}\s*}}\s+from\s+["\'][^"\']*summaries\.js["\']'
     has_import = bool(re.search(import_pattern, content))
 
-    # Check for details component with "AI summary"
-    details_pattern = r'<details[^>]*>.*?<summary>AI summary</summary>.*?</details>'
-    has_details = bool(re.search(details_pattern, content, re.DOTALL))
-
-    return has_import and has_details
+    return has_import
 
 
 def remove_existing_summary_components(content: str) -> str:
@@ -128,11 +124,8 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
             original_content = file.read()
 
         # Extract frontmatter and content
+        # All docs should have frontmatter else excluded from parsing stage
         frontmatter, after_frontmatter, _ = extract_frontmatter_and_content(original_content)
-
-        if not frontmatter:
-            # Skip files without frontmatter - they shouldn't be in the summaries
-            return "unchanged"
 
         # Check current state
         currently_has_component = has_existing_summary_component(after_frontmatter, variable_name)
