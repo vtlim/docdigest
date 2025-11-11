@@ -34,9 +34,6 @@ def main():
             config.get('commit'),  # optional field, may not exist on first run
             args.config
         )
-        if len(parsed_docs) == 0:
-            print("\n✅ Pipeline completed successfully!")
-            return
 
         # Even if no new summaries needed, we may need to update imports if exclusions changed
         # So don't exit early - continue to update_markdown_imports

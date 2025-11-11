@@ -89,7 +89,7 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
             exclude_changed = json.dumps(exclude_config, sort_keys=True) != json.dumps(old_exclude_config, sort_keys=True)
 
     if exclude_changed:
-        print("ℹ️  Exclude configuration changed")
+        print(f"ℹ️  Exclude configuration changed since {last_commit}")
 
     # If commit hash is provided, git must be available
     if last_commit is not None:
@@ -239,7 +239,7 @@ def parse_markdown_files(directory: str, last_commit: Optional[str], config_path
     files_to_process = get_files_to_process(directory, last_commit, exclude_config, config_path)
 
     if not files_to_process:
-        print("No Markdown files changed, excluded, or included.")
+        print("No Markdown files changed or newly included.")
         return {}
 
     # Parse each file and build content dictionary
