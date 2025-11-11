@@ -219,8 +219,8 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
         # result == "error" doesn't increment processed_count
 
     print(f"  • Files processed: {processed_count}/{len(markdown_files)}")
-    print(f"  • Files with summaries added: {added_count}")
-    print(f"  • Files with summaries removed: {removed_count}")
+    print(f"  • Number of imports added: {added_count}")
+    print(f"  • Number of imports removed: {removed_count}")
     print(f"  • Files unchanged: {unchanged_count}")
 
 

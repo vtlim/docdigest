@@ -300,10 +300,6 @@ def store_results(content: str, output_file: str, is_update: bool = False) -> No
     try:
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(content)
-        if not is_update:
-            print(f"Summaries written to: {output_file}")
-        else:
-            print(f"Updated summaries file: {output_file}")
     except Exception as e:
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
@@ -330,8 +326,6 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
 
     # Read existing summaries first
     existing_summaries = parse_summaries_file(output_file)
-    if existing_summaries:
-        print(f"  • Found {len(existing_summaries)} existing summaries")
 
     # Generate new summaries only for parsed or new docs
     new_summaries = {}
@@ -376,10 +370,6 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
             # Remove summaries for excluded files
             excluded_summaries = {k: v for k, v in all_summaries.items() if k in valid_var_names}
             removed_count = len(all_summaries) - len(excluded_summaries)
-
-            if removed_count > 0:
-                print(f"  • Removed {removed_count} summaries for excluded files")
-
             all_summaries = excluded_summaries
 
     # If there aren't new or removed summaries, skip ahead
@@ -392,11 +382,6 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
         js_content = format_results(all_summaries)
         is_update_only = len(new_summaries) == 0
         store_results(js_content, output_file, is_update=is_update_only)
-
-        # Show summary statistics
-        if new_summaries:
-            print(f"  • Documents processed: {len(new_summaries)}")
-            print(f"  • Total summaries in file: {len(all_summaries)}")
 
         if model == "claude" and new_summaries:
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)

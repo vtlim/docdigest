@@ -126,7 +126,7 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
 
         # Combine changed files with newly included files (remove duplicates)
         all_files = list(set(changed_files + newly_included_files))
-        print(f"  • Found {len(all_files)} to process")
+        print(f"Processing {len(all_files)} files")
 
     else:
         # Commit hash provided and exclude unchanged - only get changed files
