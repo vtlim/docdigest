@@ -232,13 +232,39 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
     if not is_automation:
         success, status_output, _ = run_git_command(['git', 'status', '--porcelain'])
 
-        if success and status_output.strip():
-            print("\n⚠️  Warning: You have uncommitted changes:")
-            print(status_output)
+        if success and status_output:
+            # Filter out docdigest-related files
+            lines = status_output.strip().split('\n')
+            non_docdigest_changes = []
 
-            if not prompt_user("Continue with commit process?", "n"):
-                print("Aborting.")
-                return False
+            for line in lines:
+                # Skip empty lines
+                if not line.strip():
+                    continue
+
+                # Parse git status line (format: "XY filename")
+                filepath = line[2:].strip()
+
+                # Allow changes to output_file, config_path, and markdown files in directory
+                if filepath not in [output_file, config_path]:
+                    from .config import load_config
+                    config = load_config(config_path)
+                    directory = config.get('directory', '')
+
+                    # Check if it's a markdown file in the docs directory
+                    if not (directory and filepath.startswith(directory) and filepath.endswith('.md')):
+                        non_docdigest_changes.append(filepath)
+
+            if non_docdigest_changes:
+                print("⚠️  Warning: Uncommitted changes detected that are not related to docdigest:")
+                for filepath in non_docdigest_changes[:5]:  # Show first 5
+                    print(f"  • {filepath}")
+                if len(non_docdigest_changes) > 5:
+                    print(f"  ... and {len(non_docdigest_changes) - 5} more")
+
+                if not prompt_user("Continue anyway?", "n"):
+                    print("Aborting.")
+                    return False
 
     # Capture original branch to restore at the end
     original_branch = get_current_branch()
