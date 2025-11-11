@@ -228,8 +228,17 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
     Returns:
         True if all commits successful, False otherwise
     """
-    # Don't validate git state - we expect markdown files to be modified
-    # The branch creation will handle ensuring we're in a clean state
+    # In interactive mode, check for uncommitted changes and warn user
+    if not is_automation:
+        success, status_output, _ = run_git_command(['git', 'status', '--porcelain'])
+
+        if success and status_output.strip():
+            print("\n⚠️  Warning: You have uncommitted changes:")
+            print(status_output)
+
+            if not prompt_user("Continue with commit process?", "n"):
+                print("Aborting.")
+                return False
 
     # Capture original branch to restore at the end
     original_branch = get_current_branch()
