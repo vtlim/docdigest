@@ -288,6 +288,29 @@ def format_results(summaries: Dict[str, str]) -> str:
     return js_content
 
 
+def create_output_file(output_file):
+    """
+    Create the output file to store the summaries
+    """
+
+    template = '''/*
+AI summaries for each topic, matched by filename
+*/
+
+
+module.exports = {
+};
+'''
+
+    # create parent directories as needed
+    os.makedirs(os.path.dirname(output_file) or '.', exist_ok=True)
+
+    # write the file
+    with open(output_file, 'w') as f:
+        f.write(template)
+    print(f"File '{output_file}' created successfully.")
+
+
 def store_results(content: str, output_file: str, is_update: bool = False) -> None:
     """
     Write formatted results to specified file.
@@ -297,6 +320,12 @@ def store_results(content: str, output_file: str, is_update: bool = False) -> No
         output_file: Path to output file
         is_update: If True, this is updating existing file rather than writing new summaries
     """
+
+    # Create the file if it doesn't exist
+    if not os.path.exists(output_file):
+        print(f"File '{output_file}' does not exist. Creating it...")
+        create_output_file(output_file)
+
     try:
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(content)
