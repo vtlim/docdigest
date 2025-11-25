@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "docdigest"
+version = "0.1.0"
+dependencies = [
+    "markdown-analysis",
+    "anthropic"
+]
+
+[tool.setuptools]
+py-modules = [
+    "commitify",
+    "config",
+    "file_utils",
+    "git_utils",
+    "import_results",
+    "main",
+    "parse_docs",
+    "summarize"
+]
