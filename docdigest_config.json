@@ -2,12 +2,9 @@
   "directory": "example-docs/docs/",
   "output_file": "example-docs/static/js/summaries.js",
   "exclude": {
-    "directories": [
-      "tutorial-extras"
-    ],
-    "files": [
-      "intro.md"
-    ]
+    "directories": [],
+    "files": [],
+    "patterns": []
   },
-  "commit": "30b714020d7faa060d16d511eb3cc4e014baca36"
+  "commit": "d23c79427b21227514768fe4cd6770e04076eb91"
 }

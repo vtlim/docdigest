@@ -142,9 +142,9 @@ Additional exclude examples:
 
 ```json
   "exclude": {
-    "patterns": ["*/README.md", "**/CHANGELOG.md", "blog/**/*.md"],
+    "directories": ["blog/", "archive/", "temp/"],
     "files": ["index.md", "404.md", "welcome.md"],
-    "directories": ["blog/", "archive/", "temp/"]
+    "patterns": ["*/README.md", "**/CHANGELOG.md", "blog/**/*.md"]
   }
 ```
 
