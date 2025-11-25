@@ -43,7 +43,9 @@ Generated summaries have the following advantages over intros and meta descripti
 
 ## Prerequisites
 
-* Python
+* Python and packages:
+   * Markdown analysis
+   * Anthropic
 * Docusaurus
 * Github
 
@@ -60,7 +62,44 @@ It detects files changed from a reference commit hash and only generates summari
 Version control is also important for the updated summaries.
 Each updated summary is committed as a separate line change so that any change can easily be reverted back.
 
-## How to use
+## Setup
+
+Install `docdigest` as follows:
+
+```sh
+pip install markdown-analysis anthropic
+cd <location of docdigest>
+pip install .
+```
+
+Run the help command to verify that it's installed:
+
+```sh
+docdigest --help
+```
+
+## How to use docdigest
+
+Use one of the following commands to run `docdigest`:
+
+```
+# Use config docdigest_config.json
+docdigest
+
+# Specify custom config
+docdigest --config docdigest_custom.json
+
+# Dry run to estimate costs
+docdigest --model claude --dry-run
+
+# Summarize in debug mode (no costs)
+docdigest --model debug
+
+# Summarize with Claude
+docdigest --model claude
+```
+
+The following sections go into more detail about using `docdigest`.
 
 ### Configuration file
 
@@ -138,28 +177,6 @@ For example:
 export ANTHROPIC_API_KEY="your-key"
 ```
 
-### Application call
-
-Use one of the following commands to run `docdigest`:
-
-```
-# Use config docdigest_config.json
-docdigest
-
-# Specify custom config
-docdigest --config docdigest_custom.json
-
-# Dry run to estimate costs
-docdigest --model claude --dry-run
-
-# Summarize in debug mode (no costs)
-docdigest --model debug
-
-# Summarize with Claude
-docdigest --model claude
-```
-
-
 ## How it works
 
 The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
@@ -170,9 +187,9 @@ With all future iterations, when the summarizations are successful, only the sum
 If there is an error generating a summary, the output file will exclude it,
 and and the Markdown file will have the summary expander removed.
 
-## Description of components
+### Underlying stages
 
-The tooling to generate AI summaries for the docs has the following components.
+The tooling to generate AI summaries for the docs has the following stages, each corresponding to a Python module in this package.
 
 1. 📖 Parse documentation
 2. 🤖 Generate summaries (writes summaries.js)
@@ -182,14 +199,16 @@ The tooling to generate AI summaries for the docs has the following components.
 
 For further details, see the [design docs](./design/).
 
-## Package structure
+### Package structure
 
 ```
 docdigest
 ├── __init__.py
 ├── commitify.py
 ├── config.py
-├── import_js.py
+├── file_utils.py
+├── git_utils.py
+├── import_results.py
 ├── main.py
 ├── parse_docs.py
 └── summarize.py
