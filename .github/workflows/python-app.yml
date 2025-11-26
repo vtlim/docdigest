@@ -29,6 +29,11 @@ jobs:
       run: python -m pip install .
       working-directory: ${{ github.workspace }}
 
+    - name: Configure Git settings
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
     - name: Run the program
       run: |
         docdigest --automation
