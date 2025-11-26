@@ -32,5 +32,15 @@ jobs:
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
     - name: Run the program
+      id: run_program
       run: |
         docdigest --automation
+
+    - name: Create pull request
+      uses: peter-evans/create-pull-request@v4
+      if: ${{ steps.run_program.outcome == 'success' }}
+      with:
+        title: 'infra: Update doc summaries'
+        branch: docdigest-auto-updates
+        base: main
+        labels: bot
