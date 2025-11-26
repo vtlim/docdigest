@@ -22,7 +22,7 @@ from .git_utils import (
 from .file_utils import parse_summaries_file
 
 # Consistent branch name for all docdigest updates
-DOCDIGEST_BRANCH_NAME = "docdigest-auto-updates"
+DOCDIGEST_BRANCH_NAME = "bot-summaries"
 
 
 def create_backup(file_path: str) -> Optional[str]:
@@ -431,7 +431,7 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
 
                 if success:
                     print(f"  • Successfully pushed to origin/{current_branch}")
-                    print("👉 Go to GitHub and create a PR from docdigest-auto-updates to main.")
+                    print(f"👉 Go to GitHub and create a PR from {DOCDIGEST_BRANCH_NAME} to main.")
                 else:
                     print(f"⚠️  Failed to push to remote: {error_msg}")
                     print(f"⚠️  Commits are saved locally but not pushed to remote")

@@ -37,10 +37,5 @@ jobs:
         docdigest --automation
 
     - name: Create pull request
-      uses: peter-evans/create-pull-request@v4
-      if: ${{ steps.run_program.outcome == 'success' }}
-      with:
-        title: 'infra: Update doc summaries'
-        branch: docdigest-auto-updates
-        base: main
-        labels: bot
+      run: gh pr create -B main -H bot-summaries --title 'infra: Update doc summaries' --body 'Created by GitHub Actions workflow'
+

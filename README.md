@@ -89,14 +89,17 @@ docdigest
 # Specify custom config
 docdigest --config docdigest_custom.json
 
-# Dry run to estimate costs
-docdigest --model claude --dry-run
-
-# Summarize in debug mode (no costs)
+# Use debug mode to ensure processing goes as expected
 docdigest --model debug
+
+# Estimate costs with Claude
+docdigest --model claude --dry-run
 
 # Summarize with Claude
 docdigest --model claude
+
+# Run in automation mode
+docdigest --automation --model claude
 ```
 
 The following sections go into more detail about using `docdigest`.
@@ -214,7 +217,7 @@ docdigest
 └── summarize.py
 ```
 
-NOTE: If you update or add a module, also update `docdigest/pyproject.toml` for GHA installation.
+NOTE: If you update or add a module, also update `pyproject.toml` for GHA installation.
 
 ## Local development
 
