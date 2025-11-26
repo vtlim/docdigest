@@ -21,12 +21,9 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
-        pip install markdown-analysis anthropic
+      run: python -m pip install --upgrade pip setuptools wheel markdown-analysis anthropic
     - name: Install docdigest
-      run: |
-        pip install ./docdigest
+      run: python -m pip install ./docdigest
       working-directory: ${{ github.workspace }}
     - name: Run the program
       run: |
