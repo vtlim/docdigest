@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: python -m pip install --upgrade pip setuptools wheel markdown-analysis anthropic
     - name: Install docdigest
-      run: python -m pip install ./docdigest
+      run: python -m pip install .
       working-directory: ${{ github.workspace }}
     - name: Run the program
       run: |

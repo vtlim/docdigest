@@ -10,14 +10,8 @@ dependencies = [
     "anthropic"
 ]
 
-[tool.setuptools]
-py-modules = [
-    "commitify",
-    "config",
-    "file_utils",
-    "git_utils",
-    "import_results",
-    "main",
-    "parse_docs",
-    "summarize"
-]
+[project.scripts]
+docdigest = "docdigest.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
