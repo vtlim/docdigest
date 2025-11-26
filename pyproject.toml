@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "docdigest"
 version = "0.1.0"
+description = "AI-powered documentation summarization tool"
 dependencies = [
     "markdown-analysis",
     "anthropic"
