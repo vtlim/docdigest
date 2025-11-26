@@ -8,6 +8,7 @@ const tutorial_basics_congratulations = "Summary in debug mode. Headers: 2, Word
 const tutorial_basics_deploy_your_site = "Summary in debug mode. Headers: 3, Word count: 66, Random string: Y7nVL";
 const tutorial_basics_create_a_page = "Summary in debug mode. Headers: 3, Word count: 38, Random string: ixCke";
 const tutorial_extras_translate_your_site = "Summary in debug mode. Headers: 6, Word count: 97, Random string: igHUi";
+const tutorial_extras_manage_docs_versions = "Summary in debug mode. Headers: 4, Word count: 67, Random string: OJdBZ";
 
 
 module.exports = {
@@ -16,5 +17,6 @@ module.exports = {
   tutorial_basics_congratulations,
   tutorial_basics_deploy_your_site,
   tutorial_basics_create_a_page,
-  tutorial_extras_translate_your_site
+  tutorial_extras_translate_your_site,
+  tutorial_extras_manage_docs_versions
 };
