@@ -2,6 +2,22 @@
 sidebar_position: 5
 ---
 
+import {tutorial_basics_deploy_your_site} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_basics_deploy_your_site}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Deploy your site
 
 Docusaurus is a **static-site-generator** (also called **[Jamstack](https://jamstack.org/)**).
