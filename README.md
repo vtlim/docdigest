@@ -214,6 +214,8 @@ docdigest
 └── summarize.py
 ```
 
+NOTE: If you update or add a module, also update `docdigest/pyproject.toml` for GHA installation.
+
 ## Local development
 
 Set up Python:
