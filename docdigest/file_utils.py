@@ -193,14 +193,18 @@ def get_variable_name(filepath: str, base_directory: str) -> str:
     frontmatter_id = extract_frontmatter_id(filepath)
 
     if frontmatter_id:
-        # Use the id from frontmatter
-        name = frontmatter_id
+        # Get the relative directory of the doc relative to the provided directory
+        relative_dir = os.path.dirname(os.path.relpath(filepath, base_directory))
+        # Use the id from frontmatter and concatenate with directory location
+        name = os.path.join(relative_dir, frontmatter_id)
     else:
-        # Fall back to filename-based approach
+        # Get the relative path of doc relative to the provided directory
         relative_path = os.path.relpath(filepath, base_directory)
+        # Fall back to filename-based approach
         name = os.path.splitext(relative_path)[0]
-        # Replace path separators and hyphens with underscores
-        name = name.replace('/', '_').replace('\\', '_').replace('-', '_')
+
+    # Replace path separators and hyphens with underscores
+    name = name.replace('/', '_').replace('\\', '_').replace('-', '_')
 
     # Convert to lowercase and remove any remaining invalid characters
     name = ''.join(c.lower() if c.isalnum() or c == '_' else '_' for c in name)
