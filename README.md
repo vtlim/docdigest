@@ -45,11 +45,13 @@ Generated summaries have the following advantages over intros and meta descripti
 
 ## Prerequisites
 
+`docdigest` was developed using the following tools:
+
 * Python and packages:
    * Markdown analysis
-   * Anthropic
+   * Anthropic (for Claude)
 * Docusaurus
-* Github
+* GitHub
 
 ### Docusaurus
 
@@ -66,7 +68,7 @@ Each updated summary is committed as a separate line change so that any change c
 
 ## Get started
 
-Install `docdigest` as follows:
+Install `docdigest`:
 
 ```sh
 pip install markdown-analysis anthropic
@@ -83,37 +85,30 @@ docdigest --help
 ## How to use docdigest
 
 To use `docdigest`, all you need to do is:
-1. Install the package in your Python environment
-1. Create a configuration file
-1. Call the program
 
-Use one of the following commands to run `docdigest`:
+1. Install the package in your Python environment. See [Get started](#get-started).
 
-```
-# Use config docdigest_config.json
-docdigest
+1. Ensure you have an Anthropic API key as the environment variable `ANTHROPIC_API_KEY`. For example:
+   ```sh
+   export ANTHROPIC_API_KEY="your-key"
+   ```
 
-# Specify custom config
-docdigest --config docdigest_custom.json
+1. Create a configuration file.  
+   Default name: `docdigest_config.json`
 
-# Use debug mode to ensure processing goes as expected
-docdigest --model debug
-
-# Estimate costs with Claude
-docdigest --model claude --dry-run
-
-# Summarize with Claude
-docdigest --model claude
-
-# Run in automation mode
-docdigest --automation --model claude
-```
+1. Call the program.  
+   Quickstart command: `docdigest`
 
 The following sections go into more detail about using `docdigest`.
 
 ## Configuration file
 
 The default configuration file name is `docdigest_config.json`.
+To specify a custom configuration:
+
+```
+docdigest --config docdigest_custom.json
+```
 
 ### Simple configuration
 
@@ -145,10 +140,12 @@ file exclusions and the commit hash from when to evaluate content changes
 
 ### Commit hash
 
-For a first time run, you don't have a `commit` field so that all docs get processed.
-Each subsequent iteration updates the commit hash to the latest version.
-If no changes are detected, the `commit` field in the config file remains the same.
+Summaries are only generated from files changed from the provided commit hash.
 
+For a first time run, don't include the `commit` field so that all docs get processed.
+Each subsequent iteration automatically updates the commit hash to the latest version.
+
+If no changes are detected, the `commit` field in the config file remains the same.
 
 ### File exclusions
 
@@ -171,12 +168,20 @@ then `docdigest` will summarize those files even if they're not changed.
 In other words, when you have a commit specified in the configuration file,
 `docdigest` summarizes both changed files and files that no longer get excluded.
 
-## Execution modes
+## Execution models
 
-### Debug mode
+You can use either the `debug` or `claude` model.
+You can also extend this package to include other LLM models like GPT.
+
+### Debug
 
 Use debug mode to verify basic functionality of `docdigest`.
 It does everything except call the LLM for summary generation.
+To use debug mode:
+
+```
+docdigest --model debug
+```
 
 Example output in `summaries.js`:
 
@@ -188,14 +193,59 @@ The output shows a count of headers, paragraph word count, and a random string.
 The random string ensures that `summaries.js` is a changed file.
 This reflects potential randomness in the LLM generating a different summary for the same content.
 
-### LLM authentication
+### Summarize with Claude
 
-Claude requires an Anthropic API key in your environment variable.
-For example:
+First estimate costs to make sure you're parsing the right content and generating the correct IDs:
 
 ```
-export ANTHROPIC_API_KEY="your-key"
+docdigest --model claude --dry-run
 ```
+
+If everything looks correct, run the summarization:
+
+```
+docdigest --model claude
+```
+
+## Meta descriptions
+
+You can also generate meta descriptions separately from summarization.
+These don't change any existing files.
+When run locally, descriptions are printed to stdout.
+When run in automation mode for a PR, the workflow attempts to create GitHub suggestions for the changed file.
+Meta descriptions use Claude for content generation.
+
+To generate meta descriptions:
+
+```
+docdigest --meta
+```
+
+## Automation
+
+The automation mode is designed to work for a continuous integration platform like GitHub Actions.
+
+For summary generation, the automation mode will automatically create a new branch called `bot-summaries`.
+If the `bot-summaries` branch already exists, it overwrite the contents of the branch.
+It then commits each change separately, for ease of reverting if need be.
+Finally, it creates a PR against the main branch.
+
+To summarize in automation mode:
+
+```
+docdigest --automation --model claude
+```
+
+For meta description generation, the program creates a comment in the PR
+that lists all the suggested descriptions. The owner of the PR can
+copy the changes into their files if desired.
+
+To generate meta descriptions in automation mode:
+
+```
+docdigest --meta --automation
+```
+
 
 ## How it works
 
@@ -217,36 +267,6 @@ __Error handling__: If there is an error generating a summary, the output file w
 and and the Markdown file will have the summary expander removed.
 
 For more technical details, see the [design docs](./design/).
-
-## Local development
-
-Set up Python:
-
-```
-# create conda env
-conda create --name summary
-conda activate summary
-
-# install packages
-# uses conda when possible, pip otherwise
-conda install anthropic
-pip install markdown-analysis
-```
-
-Install application:
-
-```
-cd <docdigest root directory>
-conda activate summary
-pip install -e .
-```
-
-Download test docs:
-
-```
-# install fresh docusaurus
-npx create-docusaurus@latest example-docs classic
-```
 
 
 ## Troubleshooting
