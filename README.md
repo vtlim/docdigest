@@ -199,50 +199,24 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## How it works
 
-The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
+__Input and output__: The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
 The output is a JavaScript file that contains the summary for each file.
-Each summary is identified by an ID based on the Docusaurus ID if it exists, else the filename.
 
+__Summary ID__: Each summary is identified by an ID based on the Docusaurus ID if it exists, else the filename.
 IDs are generated relative to the provided `directory` in the configuration.
+
 For example, let's say the configuration references directory `docs`,
 and `docs` has two subdirectories `tutorial` and `reference`.
 The summary IDs will look like `tutorial_quickstart` or `reference_syntax`,
 for `tutorial/quickstart.md` and `reference/syntax.md`, respectively.
 
-At the first execution, the Markdown files are updated to import the summary using a variable.
+__Changed files__: At the first execution, the Markdown files are updated to import the summary using a variable.
 With future iterations, only the summary file changes, not the Markdown files.
 
-If there is an error generating a summary, the output file will exclude it,
+__Error handling__: If there is an error generating a summary, the output file will exclude it,
 and and the Markdown file will have the summary expander removed.
 
-### Underlying stages
-
-The tooling to generate AI summaries for the docs has the following stages, each corresponding to a Python module in this package.
-
-1. 📖 Parse documentation
-2. 🤖 Generate summaries (writes summaries.js)
-   1. 🧮 Parallel option to dry-run (optional, exits early)
-3. 📝 Update markdown imports (modifies .md files)
-4. 📦 Commit changes (individual commits per summary)
-
-For further details, see the [design docs](./design/).
-
-### Package structure
-
-```
-docdigest
-├── __init__.py
-├── commitify.py
-├── config.py
-├── file_utils.py
-├── git_utils.py
-├── import_results.py
-├── main.py
-├── parse_docs.py
-└── summarize.py
-```
-
-NOTE: If you update or add a module, also update `pyproject.toml` for GHA installation.
+For more technical details, see the [design docs](./design/).
 
 ## Local development
 
