@@ -1,8 +1,12 @@
 name: Generate meta descriptions
 
 on:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Enter your pull request number (e.g., 123)'
+        required: true
+        type: number
 
 jobs:
   build:
@@ -10,7 +14,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+
+    - name: Get PR Branch Name
+      id: get_pr_info
+      run: |
+        PR_INFO=$(gh pr view ${{ github.event.inputs.pr_number }} --json headRefName,headRepository -q '{branch: .headRefName, repo: .headRepository.nameWithOwner}')
+        PR_BRANCH=$(echo "$PR_INFO" | jq -r .branch)
+        PR_REPO=$(echo "$PR_INFO" | jq -r .repo)
+        echo "branch=$PR_BRANCH" >> $GITHUB_OUTPUT
+        echo "repo=$PR_REPO" >> $GITHUB_OUTPUT
+        echo "Running workflow for PR #${{ github.event.inputs.pr_number }} (branch: $PR_BRANCH)"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Checkout PR Branch
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ steps.get_pr_info.outputs.repo }}
+        ref: ${{ steps.get_pr_info.outputs.branch }}
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
