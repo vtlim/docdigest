@@ -2,6 +2,22 @@
 sidebar_position: 1
 ---
 
+import {intro} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{intro}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Tutorial Intro
 
 Let's discover **Docusaurus in less than 5 minutes**.

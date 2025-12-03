@@ -2,6 +2,22 @@
 sidebar_position: 1
 ---
 
+import {tutorial_extras_manage_docs_versions} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_extras_manage_docs_versions}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Manage Docs Versions
 
 Docusaurus can manage multiple versions of your docs.

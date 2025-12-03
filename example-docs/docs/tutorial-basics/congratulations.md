@@ -3,6 +3,22 @@ sidebar_position: 6
 summary: YAY
 ---
 
+import {tutorial_basics_congratulations} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_basics_congratulations}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Congratulations!
 
 You have just learned the **basics of Docusaurus** and made some changes to the **initial template**.
