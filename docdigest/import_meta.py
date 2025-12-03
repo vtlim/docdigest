@@ -75,6 +75,73 @@ def get_repo_info() -> Tuple[str, str]:
     raise RuntimeError(f"Could not parse GitHub repository from remote URL: {remote_url}")
 
 
+def parse_frontmatter(filepath: str) -> Optional[Dict]:
+    """
+    Parse frontmatter from a Markdown file.
+
+    Args:
+        filepath: Path to the Markdown file
+
+    Returns:
+        Dictionary with:
+        - 'lines': List of all file lines
+        - 'frontmatter_start': Line index of opening --- (usually 0)
+        - 'frontmatter_end': Line index of closing ---
+        - 'description_line': Line index of description field, or None if not found
+        - 'description_value': Current description value if found, None otherwise
+        - 'insert_after_line': Suggested line index to insert description (after id/title/sidebar_label)
+        Returns None if no valid frontmatter found
+    """
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        # Find frontmatter boundaries
+        if not lines or not lines[0].strip().startswith('---'):
+            return None
+
+        frontmatter_end = None
+        for i in range(1, len(lines)):
+            if lines[i].strip().startswith('---'):
+                frontmatter_end = i
+                break
+
+        if frontmatter_end is None:
+            return None
+
+        # Look for existing description field
+        description_line = None
+        description_value = None
+        description_pattern = r'^description:\s*(.*)$'
+
+        for i in range(1, frontmatter_end):
+            match = re.match(description_pattern, lines[i])
+            if match:
+                description_line = i
+                description_value = match.group(1).strip().strip('"').strip("'")
+                break
+
+        # Find where to insert description if it doesn't exist
+        # Preferred order: after id, title, or sidebar_label (whichever comes last)
+        insert_after_line = 0  # After opening --- by default
+        for i in range(1, frontmatter_end):
+            if re.match(r'^(id|title|sidebar_label):', lines[i]):
+                insert_after_line = i
+
+        return {
+            'lines': lines,
+            'frontmatter_start': 0,
+            'frontmatter_end': frontmatter_end,
+            'description_line': description_line,
+            'description_value': description_value,
+            'insert_after_line': insert_after_line
+        }
+
+    except Exception as e:
+        print(f"⚠️  Error parsing frontmatter in {filepath}: {e}")
+        return None
+
+
 def update_frontmatter_description(filepath: str, description: str) -> bool:
     """
     Update or add description field in a Markdown file's frontmatter.
@@ -85,58 +152,61 @@ def update_frontmatter_description(filepath: str, description: str) -> bool:
 
     Returns:
         True if file was modified, False if unchanged or error
-
-    Raises:
-        RuntimeError: If file cannot be processed
     """
     try:
-        # Read file
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        # Match frontmatter (YAML between --- delimiters)
-        frontmatter_pattern = r'^---\n(.*?)\n---\n(.*)$'
-        match = re.match(frontmatter_pattern, content, re.DOTALL)
-
-        if not match:
+        fm = parse_frontmatter(filepath)
+        if fm is None:
             raise RuntimeError(f"No frontmatter found in {filepath}")
 
-        frontmatter = match.group(1)
-        body = match.group(2)
-
-        # Check if description already exists
-        description_pattern = r'^description:\s*["\']?.*["\']?$'
-        existing_match = re.search(description_pattern, frontmatter, re.MULTILINE)
-
-        # Escape quotes in description
+        lines = fm['lines']
+        description_line = fm['description_line']
         escaped_description = description.replace('"', '\\"')
+        new_description_line = f'description: "{escaped_description}"\n'
 
-        if existing_match:
+        # Check if already has this exact description
+        if description_line is not None:
+            if lines[description_line].strip() == new_description_line.strip():
+                return False  # No change needed
+
             # Replace existing description
-            new_frontmatter = re.sub(
-                description_pattern,
-                f'description: "{escaped_description}"',
-                frontmatter,
-                count=1,
-                flags=re.MULTILINE
-            )
+            lines[description_line] = new_description_line
         else:
-            # Add new description at the end of frontmatter
-            new_frontmatter = frontmatter.rstrip() + f'\ndescription: "{escaped_description}"'
+            # Insert new description after preferred fields
+            insert_at = fm['insert_after_line'] + 1
+            lines.insert(insert_at, new_description_line)
 
-        # Reconstruct file
-        new_content = f"---\n{new_frontmatter}\n---\n{body}"
+        # Write back to file
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
 
-        # Write back only if changed
-        if new_content != content:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(new_content)
-            return True
-
-        return False
+        return True
 
     except Exception as e:
         raise RuntimeError(f"Failed to update {filepath}: {e}")
+
+
+def get_description_line_for_github(filepath: str) -> Optional[tuple[int, bool]]:
+    """
+    Get the line number where description should appear for GitHub PR suggestions.
+
+    Args:
+        filepath: Path to the Markdown file
+
+    Returns:
+        Tuple of (line_number, description_exists) or None if no frontmatter
+        line_number: 1-indexed line number for GitHub API
+        description_exists: True if description field already exists
+    """
+    fm = parse_frontmatter(filepath)
+    if fm is None:
+        return None
+
+    if fm['description_line'] is not None:
+        # Description exists, return its line (1-indexed)
+        return (fm['description_line'] + 1, True)
+    else:
+        # Description doesn't exist, return where to insert (1-indexed)
+        return (fm['insert_after_line'] + 2, False)  # +1 for insert position, +1 for 1-indexing
 
 
 def update_markdown_meta(meta_descriptions: Dict[str, str], config_path: str) -> None:
@@ -248,16 +318,30 @@ def post_pr_suggestions(
         if should_exclude_file(filepath, exclude_config, directory):
             continue
 
-        # Get relative path for GitHub API
-        relative_path = os.path.relpath(filepath, directory)
+        # Find the correct line number for the description field
+        line_info = get_description_line_for_github(filepath)
+        if line_info is None:
+            print(f"⚠️  No frontmatter found in {filepath}, skipping")
+            continue
+
+        line_number, description_exists = line_info
+
+        # Get path relative to repository root
+        abs_filepath = os.path.abspath(filepath)
+        success, git_root, _ = run_git_command(['git', 'rev-parse', '--show-toplevel'])
+        if success:
+            relative_path = os.path.relpath(abs_filepath, git_root.strip())
+        else:
+            relative_path = os.path.relpath(filepath, directory)
+
         description = meta_descriptions[variable_name]
         escaped_description = description.replace('"', '\\"')
 
-        # Create suggestion comment
+        # Create suggestion comment (same format whether updating or adding)
         comment = {
             "path": relative_path,
             "body": f'```suggestion\ndescription: "{escaped_description}"\n```',
-            "line": 2  # Suggest at line 2 (after opening ---)
+            "line": line_number
         }
         comments.append(comment)
 
