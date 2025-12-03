@@ -2,6 +2,22 @@
 sidebar_position: 1
 ---
 
+import {tutorial_basics_create_a_page} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_basics_create_a_page}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Create a Page
 
 Add **Markdown or React** files to `src/pages` to create a **standalone page**:
