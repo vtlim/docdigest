@@ -1,16 +1,22 @@
 name: Generate meta descriptions
 
 on:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Enter your pull request number (e.g., 123)'
+        required: true
+        type: number
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: 'refs/pull/${{ github.event.inputs.pr_number }}/head'
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v3

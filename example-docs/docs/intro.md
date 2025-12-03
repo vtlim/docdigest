@@ -22,8 +22,6 @@ import {intro} from "@site/static/js/summaries.js"
 
 Let's discover **Docusaurus in less than 5 minutes**.
 
-This is a test change.
-
 ## Getting Started
 
 Get started by **creating a new site**.

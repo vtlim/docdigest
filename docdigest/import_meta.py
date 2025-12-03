@@ -20,23 +20,27 @@ def get_pr_number() -> Optional[int]:
     Returns:
         PR number if in PR context, None otherwise
     """
+    # Check for workflow_dispatch input first
+    event_path = os.environ.get('GITHUB_EVENT_PATH')
+    if event_path and os.path.exists(event_path):
+        try:
+            with open(event_path) as f:
+                event_data = json.load(f)
+                # Check for workflow_dispatch inputs
+                if 'inputs' in event_data and 'pr_number' in event_data['inputs']:
+                    return int(event_data['inputs']['pr_number'])
+                # Check for automatic pull_request event
+                if 'pull_request' in event_data:
+                    return event_data['pull_request']['number']
+        except Exception:
+            pass
+
     # GitHub Actions sets GITHUB_REF for PR events
     # Format: refs/pull/123/merge
     github_ref = os.environ.get('GITHUB_REF', '')
     match = re.search(r'refs/pull/(\d+)/merge', github_ref)
     if match:
         return int(match.group(1))
-
-    # Alternative: Check GITHUB_EVENT_PATH
-    event_path = os.environ.get('GITHUB_EVENT_PATH')
-    if event_path and os.path.exists(event_path):
-        try:
-            with open(event_path) as f:
-                event_data = json.load(f)
-                if 'pull_request' in event_data:
-                    return event_data['pull_request']['number']
-        except Exception:
-            pass
 
     return None
 
