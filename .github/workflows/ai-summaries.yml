@@ -34,7 +34,7 @@ jobs:
     - name: Run the program
       id: run_program
       run: |
-        docdigest --automation
+        docdigest --automation --model claude
       env:
         ANTHROPIC_API_KEY: ${{ vars.ANTHROPIC_API_KEY }}
 
