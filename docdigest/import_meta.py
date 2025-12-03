@@ -75,6 +75,41 @@ def get_repo_info() -> Tuple[str, str]:
     raise RuntimeError(f"Could not parse GitHub repository from remote URL: {remote_url}")
 
 
+def get_pr_changed_files(owner: str, repo: str, pr_number: int) -> List[str]:
+    """
+    Get list of files changed in a PR from GitHub API.
+
+    Args:
+        owner: Repository owner
+        repo: Repository name
+        pr_number: Pull request number
+
+    Returns:
+        List of file paths changed in the PR (relative to repo root)
+
+    Raises:
+        RuntimeError: If GitHub token not set or API call fails
+    """
+    github_token = os.environ.get('GITHUB_TOKEN')
+    if not github_token:
+        raise RuntimeError("GITHUB_TOKEN environment variable not set.")
+
+    pr_files_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files"
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+
+    try:
+        files_response = requests.get(pr_files_url, headers=headers)
+        files_response.raise_for_status()
+        pr_files = files_response.json()
+        # Return list of file paths (filenames)
+        return [f['filename'] for f in pr_files]
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"Failed to get PR files: {e}")
+
+
 def parse_frontmatter(filepath: str) -> Optional[Dict]:
     """
     Parse frontmatter from a Markdown file.
@@ -262,7 +297,8 @@ def post_pr_suggestions(
     owner: str,
     repo: str,
     pr_number: int,
-    config_path: str
+    config_path: str,
+    pr_changed_files: set
 ) -> None:
     """
     Post inline meta description suggestions as PR review comments.
@@ -273,6 +309,7 @@ def post_pr_suggestions(
         repo: Repository name
         pr_number: Pull request number
         config_path: Path to configuration file
+        pr_changed_files: Set of file paths changed in the PR (relative to repo root)
 
     Raises:
         RuntimeError: If GitHub token not set or API call fails
@@ -302,7 +339,7 @@ def post_pr_suggestions(
     except requests.exceptions.RequestException as e:
         raise RuntimeError(f"Failed to get PR data: {e}")
 
-    # Build review comments by iterating through all markdown files
+    # Build review comments - only for files in PR
     comments = []
     markdown_files = get_all_markdown_files(directory)
 
@@ -318,6 +355,18 @@ def post_pr_suggestions(
         if should_exclude_file(filepath, exclude_config, directory):
             continue
 
+        # Get path relative to repository root
+        abs_filepath = os.path.abspath(filepath)
+        success, git_root, _ = run_git_command(['git', 'rev-parse', '--show-toplevel'])
+        if success:
+            relative_path = os.path.relpath(abs_filepath, git_root.strip())
+        else:
+            relative_path = os.path.relpath(filepath, directory)
+
+        # CRITICAL: Only comment on files that are in the PR diff
+        if relative_path not in pr_changed_files:
+            continue
+
         # Find the correct line number for the description field
         line_info = get_description_line_for_github(filepath)
         if line_info is None:
@@ -326,13 +375,9 @@ def post_pr_suggestions(
 
         line_number, description_exists = line_info
 
-        # Get path relative to repository root
-        abs_filepath = os.path.abspath(filepath)
-        success, git_root, _ = run_git_command(['git', 'rev-parse', '--show-toplevel'])
-        if success:
-            relative_path = os.path.relpath(abs_filepath, git_root.strip())
-        else:
-            relative_path = os.path.relpath(filepath, directory)
+        print(f"  • Adding suggestion for: {variable_name}")
+        print(f"    - Path: {relative_path}")
+        print(f"    - Line: {line_number}")
 
         description = meta_descriptions[variable_name]
         escaped_description = description.replace('"', '\\"')

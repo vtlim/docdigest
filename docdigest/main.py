@@ -33,10 +33,39 @@ def main():
 
         # META DESCRIPTION MODE
         if args.meta:
+            parsed_docs = None
+            pr_changed_files_set = None  # For filtering in automation mode
+
+            # In automation mode, only process PR-changed markdown files
+            if args.automation:
+                print("\n🔍 Getting PR changed files...")
+                try:
+                    from .import_meta import get_pr_number, get_repo_info, get_pr_changed_files
+
+                    pr_number = get_pr_number()
+                    if not pr_number:
+                        raise RuntimeError("Could not determine PR number from environment")
+
+                    owner, repo = get_repo_info()
+                    pr_changed_files = get_pr_changed_files(owner, repo, pr_number)
+
+                    # Filter to only markdown files and store in set for fast lookup
+                    pr_changed_files_set = {f for f in pr_changed_files if f.endswith('.md')}
+                    print(f"  • PR #{pr_number} has {len(pr_changed_files_set)} changed markdown files")
+
+                    if not pr_changed_files_set:
+                        print("No markdown files changed in this PR")
+                        return
+
+                except Exception as e:
+                    print(f"⚠️  Failed to get PR changed files: {e}")
+                    return
+
+            # Parse documentation
             print("\n📖 Parsing documentation...")
             parsed_docs = parse_markdown_files(
                 config['directory'],
-                config.get('commit'),
+                None if args.automation else config.get('commit'),  # Ignore commit in automation mode
                 args.config
             )
 
@@ -75,7 +104,8 @@ def main():
                         owner=owner,
                         repo=repo,
                         pr_number=pr_number,
-                        config_path=args.config
+                        config_path=args.config,
+                        pr_changed_files=pr_changed_files_set
                     )
                 except Exception as e:
                     print(f"⚠️  Failed to post PR suggestions: {e}")
