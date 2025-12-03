@@ -29,6 +29,15 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
 
+/* Small font for AI summaries suffix */
 .small-font {
-  font-size: 0.8em; /* Adjust this value as needed for your desired size */
+  font-size: 0.8em;
+}
+
+/* Remove truncation from paragraphs in DocCardList */
+#__docusaurus .card p[class*="cardDescription"] {
+  overflow: visible !important;
+  white-space: normal !important;
+  display: block !important;
+  max-height: none !important;
 }
