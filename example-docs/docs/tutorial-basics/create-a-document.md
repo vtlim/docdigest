@@ -2,6 +2,22 @@
 sidebar_position: 2
 ---
 
+import {tutorial_basics_create_a_document} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_basics_create_a_document}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Create a Document
 
 Documents are **groups of pages** connected through:
