@@ -3,9 +3,11 @@ import sys
 import argparse
 from .config import load_config
 from .parse_docs import parse_markdown_files
-from .summarize import generate_summaries
+from .summarize import generate_summaries, estimate_costs
 from .import_results import update_markdown_imports
 from .commitify import commit_changes
+from .meta_description import generate_meta_descriptions, estimate_costs as estimate_meta_costs
+from .import_meta import update_markdown_meta, post_pr_suggestions, get_pr_number, get_repo_info
 
 def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
@@ -13,10 +15,12 @@ def main():
                        help='Path to config file')
     parser.add_argument('--model', default='debug', choices=['debug', 'claude'],
                        help='Model to use for summarization')
+    parser.add_argument('--meta', action='store_true',
+                       help='Generate meta descriptions instead of summaries')
     parser.add_argument('--dry-run', action='store_true',
-                       help='Estimate costs without running summarization')
+                       help='Estimate costs without running summarization or meta generation')
     parser.add_argument('--automation', action='store_true',
-                       help='Run in automation mode (no interactive prompts)')
+                       help='Run in automation mode (no interactive prompts, auto-commit and push)')
 
     args = parser.parse_args()
 
@@ -27,6 +31,65 @@ def main():
         # Get output file from config
         output_file = config.get('output_file', 'summaries.js')
 
+        # META DESCRIPTION MODE
+        if args.meta:
+            print("\n📖 Parsing documentation...")
+            parsed_docs = parse_markdown_files(
+                config['directory'],
+                config.get('commit'),
+                args.config
+            )
+
+            if not parsed_docs:
+                print("No files to generate meta descriptions for")
+                return
+
+            # Dry-run mode: estimate costs and exit
+            if args.dry_run:
+                estimate_meta_costs(parsed_docs)
+                return
+
+            print(f"\n🤖 Generating meta descriptions using Claude...")
+            meta_descriptions = generate_meta_descriptions(
+                parsed_docs=parsed_docs,
+                output_file=output_file,
+                config_path=args.config
+            )
+
+            if not meta_descriptions:
+                print("🚨 No meta descriptions generated")
+                return
+
+            # Automation mode - post PR suggestions
+            if args.automation:
+                print("\n💬 Posting suggestions to GitHub PR...")
+                try:
+                    pr_number = get_pr_number()
+                    if not pr_number:
+                        raise RuntimeError("Could not determine PR number from environment")
+
+                    owner, repo = get_repo_info()
+
+                    post_pr_suggestions(
+                        meta_descriptions=meta_descriptions,
+                        owner=owner,
+                        repo=repo,
+                        pr_number=pr_number,
+                        config_path=args.config
+                    )
+                except Exception as e:
+                    print(f"⚠️  Failed to post PR suggestions: {e}")
+                    return
+
+            # Local mode - update files directly
+            else:
+                print("\n📝 Updating markdown files...")
+                update_markdown_meta(meta_descriptions, args.config)
+
+            print("\n✅ Meta description generation completed!")
+            return
+
+        # SUMMARY MODE (existing logic)
         # Run the full pipeline
         print("\n📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(
@@ -41,7 +104,6 @@ def main():
         # Dry-run mode: estimate costs and exit
         if args.dry_run:
             if parsed_docs:
-                from .summarize import estimate_costs
                 estimate_costs(parsed_docs, args.model)
             else:
                 print("No files to estimate costs for")
