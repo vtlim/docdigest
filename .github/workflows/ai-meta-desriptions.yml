@@ -8,6 +8,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    environment: main
 
     steps:
     - uses: actions/checkout@v4
@@ -33,3 +34,5 @@ jobs:
       id: run_program
       run: |
         docdigest --meta --automation
+      env:
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
