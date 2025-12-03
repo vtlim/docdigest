@@ -10,22 +10,13 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-
-    - name: Get PR Branch Name
-      id: get_pr_info
-      run: |
-        PR_INFO=$(gh pr view ${{ github.event.inputs.pr_number }} --json headRefName,headRepository -q '{branch: .headRefName, repo: .headRepository.nameWithOwner}')
-        PR_BRANCH=$(echo "$PR_INFO" | jq -r .branch)
-        PR_REPO=$(echo "$PR_INFO" | jq -r .repo)
-        echo "branch=$PR_BRANCH" >> $GITHUB_OUTPUT
-        echo "repo=$PR_REPO" >> $GITHUB_OUTPUT
-        echo "Running workflow for PR #${{ github.event.inputs.pr_number }} (branch: $PR_BRANCH)"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.pr_number }} # Checkout the PR branch
 
     - name: Checkout PR Branch
       uses: actions/checkout@v4
