@@ -2,6 +2,22 @@
 sidebar_position: 2
 ---
 
+import {tutorial_extras_translate_your_site} from "@site/static/js/summaries.js"
+
+<details>
+<summary>Summary</summary>
+
+{tutorial_extras_translate_your_site}
+
+<br/><br/>
+<span className="small-font">
+<i>
+<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+</i>
+</span>
+
+</details>
+
 # Translate your site
 
 Let's translate `docs/intro.md` to French.
