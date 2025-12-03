@@ -16,13 +16,7 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.inputs.pr_number }} # Checkout the PR branch
-
-    - name: Checkout PR Branch
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ steps.get_pr_info.outputs.repo }}
-        ref: ${{ steps.get_pr_info.outputs.branch }}
+        ref: 'refs/pull/${{ github.event.inputs.pr_number }}/head'
 
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
