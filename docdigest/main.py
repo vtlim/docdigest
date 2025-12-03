@@ -1,11 +1,16 @@
 # docdigest/main.py
 import sys
+import os
 import argparse
 from .config import load_config
 from .parse_docs import parse_markdown_files
-from .summarize import generate_summaries
+from .summarize import generate_summaries, estimate_costs
 from .import_results import update_markdown_imports
 from .commitify import commit_changes
+from .meta_description import generate_meta_descriptions, estimate_costs as estimate_meta_costs
+from .import_meta import update_markdown_meta, post_pr_suggestions, get_pr_number, get_repo_info
+from .file_utils import get_all_markdown_files, get_variable_name
+from .git_utils import run_git_command
 
 def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
@@ -13,10 +18,12 @@ def main():
                        help='Path to config file')
     parser.add_argument('--model', default='debug', choices=['debug', 'claude'],
                        help='Model to use for summarization')
+    parser.add_argument('--meta', action='store_true',
+                       help='Generate meta descriptions instead of summaries')
     parser.add_argument('--dry-run', action='store_true',
-                       help='Estimate costs without running summarization')
+                       help='Estimate costs without running summarization or meta generation')
     parser.add_argument('--automation', action='store_true',
-                       help='Run in automation mode (no interactive prompts)')
+                       help='Run in automation mode (no interactive prompts, auto-commit and push)')
 
     args = parser.parse_args()
 
@@ -27,6 +34,119 @@ def main():
         # Get output file from config
         output_file = config.get('output_file', 'summaries.js')
 
+        # META DESCRIPTION MODE
+        if args.meta:
+            pr_info = None  # Store PR info for later use
+            pr_changed_files_set = None
+
+            # In automation mode, only process PR-changed markdown files
+            if args.automation:
+                print("\n🔍 Getting PR changed files...")
+                try:
+                    from .import_meta import get_pr_number, get_repo_info, get_pr_changed_files
+
+                    pr_number = get_pr_number()
+                    if not pr_number:
+                        raise RuntimeError("Could not determine PR number from environment")
+
+                    owner, repo = get_repo_info()
+                    pr_changed_files = get_pr_changed_files(owner, repo, pr_number)
+
+                    # Store for later
+                    pr_info = (owner, repo, pr_number)
+
+                    # Filter to only markdown files and store in set for fast lookup
+                    pr_changed_files_set = {f for f in pr_changed_files if f.endswith('.md')}
+                    print(f"  • PR #{pr_number} has {len(pr_changed_files_set)} changed markdown files")
+
+                    if not pr_changed_files_set:
+                        print("No markdown files changed in this PR")
+                        return
+
+                except Exception as e:
+                    print(f"⚠️  Failed to get PR changed files: {e}")
+                    return
+
+            # Parse documentation
+            print("\n📖 Parsing documentation...")
+            parsed_docs = parse_markdown_files(
+                config['directory'],
+                None if args.automation else config.get('commit'),  # Ignore commit in automation mode
+                args.config
+            )
+
+            # Filter to only PR files in automation mode
+            if args.automation and pr_changed_files_set:
+                # Build mapping of git-relative paths to variable names
+                from .git_utils import run_git_command
+                directory = config['directory']
+                all_md_files = get_all_markdown_files(directory)
+
+                path_to_varname = {}
+                for md_file in all_md_files:
+                    abs_filepath = os.path.abspath(md_file)
+                    success, git_root, _ = run_git_command(['git', 'rev-parse', '--show-toplevel'])
+                    if success:
+                        rel_path = os.path.relpath(abs_filepath, git_root.strip())
+                        var_name = get_variable_name(md_file, directory)
+                        path_to_varname[rel_path] = var_name
+
+                # Filter parsed_docs to only include PR files
+                pr_var_names = {path_to_varname[f] for f in pr_changed_files_set if f in path_to_varname}
+                parsed_docs = {k: v for k, v in parsed_docs.items() if k in pr_var_names}
+                print(f"  • Filtered to {len(parsed_docs)} files from PR")
+
+            if not parsed_docs:
+                print("No files to generate meta descriptions for")
+                return
+
+            # Dry-run mode: estimate costs and exit
+            if args.dry_run:
+                estimate_meta_costs(parsed_docs)
+                return
+
+            print(f"\n🤖 Generating meta descriptions using Claude...")
+            meta_descriptions = generate_meta_descriptions(
+                parsed_docs=parsed_docs,
+                output_file=output_file,
+                config_path=args.config
+            )
+
+            if not meta_descriptions:
+                print("🚨 No meta descriptions generated")
+                return
+
+            # Automation mode - post PR suggestions
+            if args.automation:
+                print("\n💬 Posting suggestions to GitHub PR...")
+                try:
+                    pr_number = get_pr_number()
+                    if not pr_number:
+                        raise RuntimeError("Could not determine PR number from environment")
+
+                    owner, repo = get_repo_info()
+
+                    post_pr_suggestions(
+                        meta_descriptions=meta_descriptions,
+                        owner=owner,
+                        repo=repo,
+                        pr_number=pr_number,
+                        config_path=args.config,
+                        pr_changed_files=pr_changed_files_set
+                    )
+                except Exception as e:
+                    print(f"⚠️  Failed to post PR suggestions: {e}")
+                    return
+
+            # Local mode - update files directly
+            else:
+                print("\n📝 Updating markdown files...")
+                update_markdown_meta(meta_descriptions, args.config)
+
+            print("\n✅ Meta description generation completed!")
+            return
+
+        # SUMMARY MODE (existing logic)
         # Run the full pipeline
         print("\n📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(
@@ -35,13 +155,9 @@ def main():
             args.config
         )
 
-        # Even if no new summaries needed, we may need to update imports if exclusions changed
-        # So don't exit early - continue to update_markdown_imports
-
         # Dry-run mode: estimate costs and exit
         if args.dry_run:
             if parsed_docs:
-                from .summarize import estimate_costs
                 estimate_costs(parsed_docs, args.model)
             else:
                 print("No files to estimate costs for")

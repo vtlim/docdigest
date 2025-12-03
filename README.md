@@ -171,6 +171,7 @@ In other words, when you have a commit specified in the configuration file,
 ## Execution models
 
 You can use either the `debug` or `claude` model.
+The program runs in `debug` mode by default.
 You can also extend this package to include other LLM models like GPT.
 
 ### Debug
@@ -207,45 +208,48 @@ If everything looks correct, run the summarization:
 docdigest --model claude
 ```
 
-## Meta descriptions
-
-You can also generate meta descriptions separately from summarization.
-These don't change any existing files.
-When run locally, descriptions are printed to stdout.
-When run in automation mode for a PR, the workflow attempts to create GitHub suggestions for the changed file.
-Meta descriptions use Claude for content generation.
-
-To generate meta descriptions:
-
-```
-docdigest --meta
-```
-
-## Automation
-
-The automation mode is designed to work for a continuous integration platform like GitHub Actions.
-
-For summary generation, the automation mode will automatically create a new branch called `bot-summaries`.
-If the `bot-summaries` branch already exists, it overwrite the contents of the branch.
-It then commits each change separately, for ease of reverting if need be.
-Finally, it creates a PR against the main branch.
-
+Summarization is also available in automation mode, intended for use in
+a continuous integration platform like GitHub Actions.
 To summarize in automation mode:
 
 ```
 docdigest --automation --model claude
 ```
 
-For meta description generation, the program creates a comment in the PR
-that lists all the suggested descriptions. The owner of the PR can
-copy the changes into their files if desired.
+The automation mode automatically creates a new branch called `bot-summaries`.
+If the branch already exists, it overwrite the contents of the branch.
+The program then commits each change separately and creates a PR against the main branch.
+Commits are kept separate so that it's easier to revert if desired.
 
-To generate meta descriptions in automation mode:
+
+## Meta descriptions
+
+You can also generate meta descriptions separately from summarization.
+This also uses Claude, with an available `--dry-run` option.
+
+When run locally, the program checks for `description` in the front matter
+of the Markdown files. It updates the description field if present and adds it if not.
+You can then create a branch, add those files, then commit and push the changes.
+To generate meta descriptions locally:
+
+```
+docdigest --meta
+```
+
+The automation mode is designed to run in a PR that contains changed Markdown files.
+The program parses the docs, uses Claude to generate summaries for only the changed files,
+then creates a comment in the PR that has a list of meta description suggestions.
+You can then manually edit the files to include the descriptions.
+To generate meta descriptions in an automated workflow:
 
 ```
 docdigest --meta --automation
 ```
 
+Note that the automation mode can't create inline suggestions for the
+changed files since the front matter content may not be in the PR diff context.
+In other words, you can't make a suggestion at line 3 when the only change
+in the doc is at line 50.
 
 ## How it works
 

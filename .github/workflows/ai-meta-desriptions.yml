@@ -1,10 +1,8 @@
-name: Generate summaries
+name: Generate meta descriptions
 
 on:
+  pull_request:
   workflow_dispatch:
-  schedule:
-    # run on 8:00 AM UTC (00:00 PT), any day, any month, 3rd day of week (Wed)
-    - cron: '0 8 * * 3'
 
 jobs:
   build:
@@ -34,12 +32,7 @@ jobs:
     - name: Run the program
       id: run_program
       run: |
-        docdigest --automation --model claude
+        docdigest --meta --automation
       env:
         ANTHROPIC_API_KEY: ${{ vars.ANTHROPIC_API_KEY }}
-
-    - name: Create pull request
-      run: |
-        gh pr create -B main -H bot-summaries --title "infra: Update doc summaries" --body "Created by GitHub Actions workflow"
-      env:
-        GH_TOKEN: ${{ github.token }}
+        GITHUB_TOKEN: ${{ github.token }}
