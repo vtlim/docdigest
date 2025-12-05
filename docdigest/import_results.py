@@ -67,7 +67,7 @@ def remove_existing_summary_components(content: str) -> str:
     content = re.sub(import_pattern, '', content, flags=re.MULTILINE)
 
     # Remove any summary details block with our AI disclaimer signature
-    details_pattern = r'<details[^>]*>.*?<summary>Summary</summary>.*?</details>'
+    details_pattern = r'<details[^>]*>.*?<summary>AI summary</summary>.*?</details>'
     content = re.sub(details_pattern, '', content, flags=re.DOTALL)
 
     # Clean up multiple consecutive newlines
@@ -93,7 +93,7 @@ def create_summary_component(variable_name: str, import_path: str) -> str:
     component = f'''import {{{variable_name}}} from "{import_path}"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {{{variable_name}}}
 
