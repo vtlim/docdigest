@@ -100,6 +100,7 @@ To use `docdigest`, all you need to do is:
    Quickstart command: `docdigest`
 
 The following sections go into more detail about using `docdigest`.
+For a reference list of commands, see [Commands](./COMMANDS.md).
 
 ## Configuration file
 
@@ -272,6 +273,19 @@ and and the Markdown file will have the summary expander removed.
 
 For more technical details, see the [design docs](./design/).
 
+## Remove a summary
+
+To remove a summary, you just need to revert the git commit that introduced the summary.
+This removes the following content:
+
+* `summaries.js` file:
+   * `const` summary variable
+   * corresponding line in `module.exports`
+* Markdown file:
+   * import summary line
+   * `<details>` block with the summary
+
+Optionally, update the `docdigest` configuration to list that file in the exclusions.
 
 ## Troubleshooting
 
