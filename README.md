@@ -271,7 +271,7 @@ With future iterations, only the summary file changes, not the Markdown files.
 __Error handling__: If there is an error generating a summary, the output file will exclude it,
 and and the Markdown file will have the summary expander removed.
 
-For more technical details, see the [design docs](./design/).
+For more technical details, see the [design docs](./design/index.md) and the diagram within.
 
 ## Remove a summary
 
