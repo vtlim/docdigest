@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 from mrkdwn_analysis import MarkdownAnalyzer
-from .config import load_config, save_config
+from .config import load_config
 from .file_utils import get_all_markdown_files, should_exclude_file, filter_excluded_files, get_variable_name, has_frontmatter
 from .git_utils import is_git_repository, get_git_changed_files, run_git_command
 

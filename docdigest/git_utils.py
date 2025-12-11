@@ -42,19 +42,19 @@ def is_git_repository() -> bool:
     return success
 
 
-def get_current_commit_hash() -> str:
+def get_latest_main_hash() -> str:
     """
-    Get the current git commit hash.
+    Get the most recent git commit hash for the main branch.
 
     Returns:
-        Current commit hash as string
+        Commit hash as string
 
     Raises:
         RuntimeError: If unable to get commit hash
     """
-    success, stdout, _ = run_git_command(['git', 'rev-parse', 'HEAD'])
+    success, stdout, _ = run_git_command(['git', 'rev-parse', 'main'])
     if not success:
-        raise RuntimeError("🚨 Failed to get current git commit hash")
+        raise RuntimeError("🚨 Failed to get latest main git commit hash")
     return stdout
 
 
@@ -145,7 +145,7 @@ def validate_git_state(allowed_files: Optional[List[str]] = None) -> Tuple[bool,
     # Check working directory - allow specific files to have changes
     success, stdout, _ = run_git_command(['git', 'status', '--porcelain'])
     if not success:
-        return False, "Failed to check git status"
+        return False, "🚨 Failed to check git status"
 
     if stdout:
         # There are changes - check if they're all in allowed files
@@ -242,8 +242,8 @@ if __name__ == "__main__":
         print(f"Git config valid: {has_git_config()}")
 
         try:
-            commit_hash = get_current_commit_hash()
-            print(f"Current commit: {commit_hash}")
+            commit_hash = get_latest_main_hash()
+            print(f"Latest main commit: {commit_hash}")
         except RuntimeError as e:
             print(f"Error: {e}")
 

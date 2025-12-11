@@ -8,17 +8,35 @@ The tooling to generate AI summaries for the docs has the following stages, each
 3. 📝 Update markdown imports (modifies .md files)
 4. 📦 Commit changes (individual commits per summary)
 
+### Assumptions
+
+Docs
+* Platform: Docusaurus (tested with v3.7.0 and v3.8.1)
+* Markdown file format
+* Parsing on paragraph and header content
+
+Continuous integration:
+* GitHub for updates
+* GitHub Actions for automation
+* Main branch is `main`
+* Feature branch is `bot-summaries`
+
+LLM:
+* Uses Claude Sonnet 4.5
+* [Pricing](https://www.claude.com/pricing#api) is $3 per 1M input tokens and $15 per 1M output tokens
+
 ### Package structure
 
 ```
 docdigest
-├── __init__.py
 ├── commitify.py
 ├── config.py
 ├── file_utils.py
 ├── git_utils.py
+├── import_meta.py
 ├── import_results.py
 ├── main.py
+├── meta_description.py
 ├── parse_docs.py
 └── summarize.py
 ```

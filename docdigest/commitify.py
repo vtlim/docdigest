@@ -15,7 +15,7 @@ from .git_utils import (
     has_git_config,
     validate_git_state,
     create_branch,
-    get_current_commit_hash,
+    get_latest_main_hash,
     delete_branch,
     branch_exists
 )
@@ -400,10 +400,10 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
         # Success - now commit any remaining changes (config file and any orphaned markdown files)
         print(f"  • Committed {len(commit_hashes)} summaries")
 
-        # Update config file with current commit hash
+        # Update config file with latest main commit hash
         from .config import save_config
         config = load_config(config_path)
-        current_commit = get_current_commit_hash()
+        current_commit = get_latest_main_hash()
         config['commit'] = current_commit
         save_config(config_path, config)
 
