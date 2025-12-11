@@ -10,19 +10,27 @@ The tooling to generate AI summaries for the docs has the following stages, each
 
 ### Assumptions
 
+This section lists the framework details for which this package was built and tested.
+Some of these are major tooling that could be changed with major effort (Docsaurus, GitHub, Claude).
+Others can be extended with minor effort.
+
 Docs
-* Platform: Docusaurus (tested with v3.7.0 and v3.8.1)
-* Markdown file format
-* Parsing on paragraph and header content
+
+* Docusaurus (tested with v3.7.0 and v3.8.1)
+* Markdown files with `.md` extension and supports HTML (`file_utils.py`)
+* Parsing on paragraph and header content (`parse_docs.py`)
+* Hard coded "about" link (`import_results.py`)
 
 Continuous integration:
+
 * GitHub for updates
 * GitHub Actions for automation
-* Main branch is `main`
-* Feature branch is `bot-summaries`
+* Main branch is `main` (`git_utils.py`)
+* Feature branch is `bot-summaries` (`commitify.py`)
 
 LLM:
-* Uses Claude Sonnet 4.5
+
+* Claude Sonnet 4.5
 * [Pricing](https://www.claude.com/pricing#api) is $3 per 1M input tokens and $15 per 1M output tokens
 
 ### Package structure
