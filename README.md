@@ -301,5 +301,14 @@ __Meaning:__ For a code block denoted with the character sequence of three backt
 
 __Resolution:__ Confirm that each code block has the start and end character sequence. If the line reported is not a start sequence, evaluate the previous code block. Try adding a blank line before and after the character sequence.
 
+### Failed to get changed files
 
+__Example error:__
 
+```
+Error: 🚨 Failed to get changed files since commit 74001ed173fab75acbcf939ede865df0f02b6bbc
+```
+
+__Meaning:__ Git can't recognize the commit hash provided in the `docdigest` configuration.
+
+__Resolution:__ Ensure that the commit hash is a valid hash from the main branch. It can't be a hash from a branch, such as copied from a pull request. Check for any typos or trailing spaces.
