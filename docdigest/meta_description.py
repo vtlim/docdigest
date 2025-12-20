@@ -110,13 +110,18 @@ Create a compelling meta description (150-160 characters) that:
 - Uses clear, accessible language
 - Focuses on benefits to the reader
 
+Ensure the meta descriptions meet these requirements:
+- The description MUST be grammatically correct with proper punctuation and article use.
+- The entire description MUST contain 160 characters or fewer.
+- Each sentence in the description MUST contain 15 words or fewer.
+
 **Content to summarize:**
 {content}
 
 **Document headers:**
 {headers}
 
-Provide ONLY the meta description text (150-160 characters), nothing else. No quotes, no preamble, just the description.
+Provide ONLY the meta description text, nothing else. No quotes, no preamble, just the description.
 """
 
 

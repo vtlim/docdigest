@@ -36,6 +36,7 @@ The summary will be displayed in an expandable section at the top of the documen
 - Write it for an audience of developers or technical users
 - Use clear, accessible language that matches the original tone
 - Use plain text between 25-35 words and no special formatting
+- Ensure that each sentence is 15 words or fewer and is grammatically correct
 
 **Content to summarize:**
 {content}

@@ -104,8 +104,14 @@ For a reference list of commands, see [Commands](./COMMANDS.md).
 
 ## Configuration file
 
+`docdigest` takes a JSON configuration file that describes the
+location of the source files, the output file, any
+file exclusions, and an optional reference commit hash.
+
+### Default file name
+
 The default configuration file name is `docdigest_config.json`.
-To specify a custom configuration:
+To specify a custom configuration in your request:
 
 ```
 docdigest --config docdigest_custom.json
@@ -113,7 +119,12 @@ docdigest --config docdigest_custom.json
 
 ### Simple configuration
 
-At the most basic level, list the source of your docs and where to write the output file.
+At the most basic level, include the following:
+
+* `directory`: the source folder of your docs
+* `output_file`: where to write the output file
+
+Both of these fields are relative to where you call `docdigest`.
 
 ```json
 {
@@ -139,20 +150,11 @@ file exclusions and the commit hash from when to evaluate content changes
 }
 ```
 
-### Commit hash
-
-Summaries are only generated from files changed from the provided commit hash.
-
-For a first time run, don't include the `commit` field so that all docs get processed.
-Each subsequent iteration automatically updates the commit hash to the latest version.
-
-If no changes are detected, the `commit` field in the config file remains the same.
-
 ### File exclusions
 
 To avoid summarizing certain files, list them in the `exclude` field.
 You can specify exclusions by regex patterns, file names, and directory names.
-Define exclusions relative to `directory`.
+Unlike `output_file`, the `exclude` patterns are relative to the input `directory`.
 
 Additional exclude examples:
 
@@ -168,6 +170,15 @@ When files get removed from `exclude`, i.e., they're newly included,
 then `docdigest` will summarize those files even if they're not changed.
 In other words, when you have a commit specified in the configuration file,
 `docdigest` summarizes both changed files and files that no longer get excluded.
+
+### Commit hash
+
+Summaries are only generated from files changed from the provided commit hash.
+
+For a first time run, don't include the `commit` field so that all docs get processed.
+Each subsequent iteration automatically updates the commit hash to the latest version.
+
+If no changes are detected, the `commit` field in the config file remains the same.
 
 ## Execution models
 
