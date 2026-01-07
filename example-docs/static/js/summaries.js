@@ -7,7 +7,7 @@ const tutorial_basics_create_a_document = "Documents are page groups with auto-g
 const tutorial_basics_congratulations = "This concluding page encourages exploring advanced Docusaurus features like versioning and internationalization after completing the basics tutorial. It invites feedback on any unclear or problematic content.";
 const tutorial_basics_deploy_your_site = "Docusaurus generates static HTML, CSS, and JavaScript files in a build folder for production deployment. These files can be tested locally and deployed almost anywhere at minimal or no cost.";
 const tutorial_basics_create_a_page = "Create standalone pages by adding Markdown or React files to the src/pages directory. Files automatically become accessible routes. Simple setup requires no additional configuration.";
-const tutorial_extras_translate_your_site = "Summary in debug mode. Headers: 6, Word count: 97, Random string: 3sXgV";
+const tutorial_extras_translate_your_site = "This guide explains how to add multi-language support to your Docusaurus site. Learn to configure locales, translate documentation files, and build multilingual versions. Essential for creating internationally accessible documentation sites.";
 const tutorial_extras_manage_docs_versions = "Summary in debug mode. Headers: 4, Word count: 67, Random string: EBIeD";
 
 
