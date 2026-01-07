@@ -8,7 +8,7 @@ const tutorial_basics_congratulations = "This concluding page encourages explori
 const tutorial_basics_deploy_your_site = "Docusaurus generates static HTML, CSS, and JavaScript files in a build folder for production deployment. These files can be tested locally and deployed almost anywhere at minimal or no cost.";
 const tutorial_basics_create_a_page = "Create standalone pages by adding Markdown or React files to the src/pages directory. Files automatically become accessible routes. Simple setup requires no additional configuration.";
 const tutorial_extras_translate_your_site = "This guide explains how to add multi-language support to your Docusaurus site. Learn to configure locales, translate documentation files, and build multilingual versions. Essential for creating internationally accessible documentation sites.";
-const tutorial_extras_manage_docs_versions = "Summary in debug mode. Headers: 4, Word count: 67, Random string: EBIeD";
+const tutorial_extras_manage_docs_versions = "Docusaurus supports multiple documentation versions by copying docs into versioned folders and tracking them in versions.json. Add a navbar dropdown to let users switch between versions easily and edit versioned docs independently.";
 
 
 module.exports = {
