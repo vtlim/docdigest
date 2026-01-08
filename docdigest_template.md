@@ -1,9 +1,9 @@
-import {{{variable_name}}} from "{import_path}"
+import {{variable_name}} from "{import_path}"
 
 <details>
-<summary>AI summary</summary>
+<summary>Summary</summary>
 
-{{{variable_name}}}
+{{variable_name}}
 
 <br/><br/>
 <span className="small-font">
@@ -13,3 +13,4 @@ import {{{variable_name}}} from "{import_path}"
 </span>
 
 </details>
+
