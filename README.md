@@ -61,10 +61,12 @@ The package can be adapted to work with other doc set configurations by changing
 
 ### GitHub
 
-`docdigest` assumes version control in a GitHub repository.
-It detects files changed from a reference commit hash and only generates summaries for those files.
-Version control is also important for the updated summaries.
-Each updated summary is committed as a separate line change so that any change can easily be reverted back.
+If you're only running the summary generation a single time, you don't have to use a GitHub repository.
+
+It's required when you specify a reference commit hash in the `docdigest` configuration.
+The application uses git to detect which files have changed since that commit and only generates summaries for those files.
+When you commit changes made by `docdigest`, the changes for each doc are committed separately so that you can `git revert` any doc you don't want to update.
+
 
 ## Get started
 
@@ -95,6 +97,20 @@ To use `docdigest`:
 
 1. Create a configuration file `docdigest_config.json`. Update the configuration to point to your input docs and designate where to write the output file.
 
+   <details><summary>Basic template</summary>
+
+   ```
+   {
+     "directory": "example-docs/docs/",
+     "output_file": "example-docs/static/js/summaries.js",
+     "summary_template": "docdigest_template.md"
+   }   
+   ```
+   </details>
+
+1. Create a template file, `docdigest_template.md`. Replace the example link in the footer text.
+Optionally, you can change the summary expander title, change the footer text, or remove the footer altogether.
+
    <details><summary>Basic configuration</summary>
 
    ```
@@ -117,21 +133,20 @@ To use `docdigest`:
    ```
    </details>
 
-1. Create a template file, `docdigest_template.md`. Replace the example link in the footer text.
-Optionally, you can change the summary expander title, change the footer text, or remove the footer altogether.
-
-   <details><summary>Basic template</summary>
+1. Run the program in debug mode. This allows you to verify the file processing without calling the API yet.
 
    ```
-   {
-     "directory": "example-docs/docs/",
-     "output_file": "example-docs/static/js/summaries.js",
-     "summary_template": "docdigest_template.md"
-   }   
+   docdigest  --model debug
    ```
-   </details>
 
-1. Run the program by calling `docdigest`.
+1. When asked whether to commit, type `n`.
+1. Review the output in your terminal. Ensure that it lists the correct set of docs and that the output is where you intend.
+1. View the summary components. Preview the docs such as using `npm run start`. If you're in a git repository, you can view line changes with `git diff`.
+1. If everything looks as expected, generate the summaries themselves:
+
+   ```
+   docdigest
+   ```
 
 The following sections go into more detail about using `docdigest`.
 For a reference list of commands, see [Commands](./COMMANDS.md).
