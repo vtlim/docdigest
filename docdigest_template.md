@@ -8,7 +8,7 @@ import {{variable_name}} from "{import_path}"
 <br/><br/>
 <span className="small-font">
 <i>
-<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
+<a href="https://example.com/">About AI summaries.</a>
 </i>
 </span>
 
