@@ -52,12 +52,13 @@ def has_existing_summary_component(content: str, variable_name: str) -> bool:
     return has_import
 
 
-def remove_existing_summary_components(content: str) -> str:
+def remove_existing_summary_components(content: str, template: str) -> str:
     """
-    Remove any existing import and summary components from content.
+    Remove any existing import and summary components from content based on the template.
 
     Args:
         content: Markdown content (after frontmatter)
+        template: Template string to derive patterns from
 
     Returns:
         Content with any existing summary components removed
@@ -66,9 +67,18 @@ def remove_existing_summary_components(content: str) -> str:
     import_pattern = r'^import\s+\{[^}]+\}\s+from\s+["\'][^"\']*summaries\.js["\']\s*\n*'
     content = re.sub(import_pattern, '', content, flags=re.MULTILINE)
 
-    # Remove any summary details block with our AI disclaimer signature
-    details_pattern = r'<details[^>]*>.*?<summary>AI summary</summary>.*?</details>'
-    content = re.sub(details_pattern, '', content, flags=re.DOTALL)
+    # Extract the summary header from template to build a flexible pattern
+    # Look for <summary>...</summary> in the template
+    summary_match = re.search(r'<summary>(.*?)</summary>', template)
+    if summary_match:
+        summary_text = re.escape(summary_match.group(1))  # Escape special regex chars
+        # Remove any details block with this specific summary text
+        details_pattern = rf'<details[^>]*>.*?<summary>{summary_text}</summary>.*?</details>'
+        content = re.sub(details_pattern, '', content, flags=re.DOTALL)
+    else:
+        # Fallback: remove any details block (shouldn't happen if template is valid)
+        details_pattern = r'<details[^>]*>.*?</details>'
+        content = re.sub(details_pattern, '', content, flags=re.DOTALL)
 
     # Clean up multiple consecutive newlines
     content = re.sub(r'\n{3,}', '\n\n', content)
@@ -76,41 +86,44 @@ def remove_existing_summary_components(content: str) -> str:
     return content
 
 
-def create_summary_component(variable_name: str, import_path: str) -> str:
+def load_summary_template(template_path: str) -> str:
     """
-    Create the import statement and summary UI component.
+    Load the summary component template from file.
 
-    NOTE: If you update the summary expander text, you may also
-    need to update the regex in remove_existing_summary_components()
+    Args:
+        template_path: Path to the template markdown file
+
+    Returns:
+        Template string with {variable_name} and {import_path} placeholders
+    """
+    try:
+        with open(template_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Summary template not found: {template_path}\n"
+            f"Please create this file or update 'summary_template' in your config."
+        )
+
+
+def create_summary_component(variable_name: str, import_path: str, template: str) -> str:
+    """
+    Create the import statement and summary UI component from template.
 
     Args:
         variable_name: JavaScript variable name for the summary
         import_path: Docusaurus import path
+        template: Template string with {variable_name} and {import_path} placeholders
 
     Returns:
         Formatted import and component string
     """
-    component = f'''import {{{variable_name}}} from "{import_path}"
-
-<details>
-<summary>AI summary</summary>
-
-{{{variable_name}}}
-
-<br/><br/>
-<span className="small-font">
-<i>
-<a href="https://docs.imply.io/lumi/">About AI summaries.</a>
-</i>
-</span>
-
-</details>
-
-'''
-    return component
+    # Replace placeholders in template
+    return template.replace('{variable_name}', variable_name).replace('{import_path}', import_path)
 
 
-def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, import_path: str) -> str:
+def process_markdown_file(filepath: str, variable_name: str, has_summary: bool,
+                         import_path: str, template: str) -> str:
     """
     Process a single markdown file to add/remove summary components.
 
@@ -119,6 +132,7 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
         variable_name: JavaScript variable name for this file
         has_summary: Whether this file has a summary in the summaries dict
         import_path: Docusaurus import path for summaries
+        template: Template string for creating summary components
 
     Returns:
         Action taken: "added", "removed", "unchanged", or "error"
@@ -145,14 +159,14 @@ def process_markdown_file(filepath: str, variable_name: str, has_summary: bool, 
         # Make changes
         if needs_component:
             # Remove existing (if any) and add new component
-            cleaned_content = remove_existing_summary_components(after_frontmatter)
-            summary_component = create_summary_component(variable_name, import_path)
+            cleaned_content = remove_existing_summary_components(after_frontmatter, template)
+            summary_component = create_summary_component(variable_name, import_path, template)
             new_content = frontmatter + summary_component + cleaned_content
             action = "➕ Added import"
             result = "added"
         else:
             # Remove existing component
-            cleaned_content = remove_existing_summary_components(after_frontmatter)
+            cleaned_content = remove_existing_summary_components(after_frontmatter, template)
             new_content = frontmatter + cleaned_content
             action = "⛔ Removed import"
             result = "removed"
@@ -182,6 +196,10 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
     directory = config['directory']  # required field, will raise KeyError if missing
     output_file = config.get('output_file', 'summaries.js')  # optional with default
     exclude_config = config.get('exclude', {})
+    template_path = config['summary_template']  # required field, will raise KeyError if missing
+
+    # Load the summary template once
+    template = load_summary_template(template_path)
 
     # Convert output file to import path
     import_path = convert_output_file_to_import_path(output_file)
@@ -209,7 +227,7 @@ def update_markdown_imports(summaries: Dict[str, str], config_path: str) -> None
         should_have_summary = not is_excluded and has_summary_data
 
         # Process the file
-        result = process_markdown_file(filepath, variable_name, should_have_summary, import_path)
+        result = process_markdown_file(filepath, variable_name, should_have_summary, import_path, template)
 
         # Update counters based on result
         if result == "added":

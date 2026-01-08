@@ -117,40 +117,46 @@ To specify a custom configuration in your request:
 docdigest --config docdigest_custom.json
 ```
 
-### Simple configuration
-
-At the most basic level, include the following:
-
-* `directory`: the source folder of your docs
-* `output_file`: where to write the output file
-
-Both of these fields are relative to where you call `docdigest`.
+### Basic configuration
 
 ```json
 {
   "directory": "example-docs/docs/",
-  "output_file": "example-docs/static/js/summaries.js"
+  "output_file": "example-docs/static/js/summaries.js",
+  "summary_template": "docdigest_template.md"
 }
 ```
 
-### Advanced configuration
+The basic configuration requires the following properties:
+
+* `directory`: the source folder of your docs, relative to where you call `docdigest`
+* `output_file`: where to write the output file, relative to where you call `docdigest`
+* `summary_template`: file containing the template of the summary component to import
+
+In the summary template, you can customize the imported HTML component, such as
+its title and any preamble or closing text.
+Be sure to retain the `import` statement and the `<summary>` component as a whole.
+The summary itself goes in `{{{variable_name}}}`.
+
+### Additional configuration
+
+```json
+{
+  "directory": "example-docs/docs/",
+  "output_file": "example-docs/static/js/summaries.js",
+  "summary_template": "docdigest_template.md",
+  "exclude": {
+    "files": ["tutorial-basics/create-a-document.md"],
+  },
+  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856"
+}
+```
 
 To further configure the summary generation, you can designate
 file exclusions and the commit hash from when to evaluate content changes
 (no summaries are generated if the content didn't change).
 
-```json
-{
-  "directory": "example-docs/docs/",
-  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
-  "output_file": "example-docs/static/js/summaries.js",
-  "exclude": {
-    "files": ["tutorial-basics/create-a-document.md"],
-  }
-}
-```
-
-### File exclusions
+#### File exclusions
 
 To avoid summarizing certain files, list them in the `exclude` field.
 You can specify exclusions by regex patterns, file names, and directory names.
@@ -171,7 +177,7 @@ then `docdigest` will summarize those files even if they're not changed.
 In other words, when you have a commit specified in the configuration file,
 `docdigest` summarizes both changed files and files that no longer get excluded.
 
-### Commit hash
+#### Commit hash
 
 Summaries are only generated from files changed from the provided commit hash.
 
@@ -180,7 +186,7 @@ Each subsequent iteration automatically updates the commit hash to the latest ve
 
 If no changes are detected, the `commit` field in the config file remains the same.
 
-## Execution models
+## Execution modes
 
 You can use either the `debug` or `claude` model.
 The program runs in `debug` mode by default.
