@@ -2,13 +2,13 @@
 Summaries for each topic, matched by filename
 */
 
-const intro = "Summary in debug mode. Headers: 5, Word count: 145, Random string: S8TAq";
-const tutorial_basics_create_a_document = "Summary in debug mode. Headers: 5, Word count: 49, Random string: vC3BK";
-const tutorial_basics_congratulations = "Summary in debug mode. Headers: 2, Word count: 43, Random string: 48TmX";
-const tutorial_basics_deploy_your_site = "Summary in debug mode. Headers: 3, Word count: 66, Random string: huqOV";
-const tutorial_basics_create_a_page = "Summary in debug mode. Headers: 3, Word count: 38, Random string: clYW3";
-const tutorial_extras_translate_your_site = "Summary in debug mode. Headers: 6, Word count: 97, Random string: 3sXgV";
-const tutorial_extras_manage_docs_versions = "Summary in debug mode. Headers: 4, Word count: 67, Random string: EBIeD";
+const intro = "Learn how to quickly set up and run your first Docusaurus site using the classic template. This guide covers installation commands, starting the development server, and making your first edits with automatic reload.";
+const tutorial_basics_create_a_document = "Documents are page groups with auto-generated sidebars from the docs folder. Create markdown files to add pages. Customize sidebar labels and positions using metadata in each file.";
+const tutorial_basics_congratulations = "This concluding page encourages exploring advanced Docusaurus features like versioning and internationalization after completing the basics tutorial. It invites feedback on any unclear or problematic content.";
+const tutorial_basics_deploy_your_site = "Docusaurus generates static HTML, CSS, and JavaScript files in a build folder for production deployment. These files can be tested locally and deployed almost anywhere at minimal or no cost.";
+const tutorial_basics_create_a_page = "Create standalone pages by adding Markdown or React files to the src/pages directory. Files automatically become accessible routes. Simple setup requires no additional configuration.";
+const tutorial_extras_translate_your_site = "This guide explains how to add multi-language support to your Docusaurus site. Learn to configure locales, translate documentation files, and build multilingual versions. Essential for creating internationally accessible documentation sites.";
+const tutorial_extras_manage_docs_versions = "Docusaurus supports multiple documentation versions by copying docs into versioned folders and tracking them in versions.json. Add a navbar dropdown to let users switch between versions easily and edit versioned docs independently.";
 
 
 module.exports = {
