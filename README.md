@@ -117,7 +117,7 @@ To specify a custom configuration in your request:
 docdigest --config docdigest_custom.json
 ```
 
-### Basic configuration
+### Required properties
 
 ```json
 {
@@ -135,8 +135,7 @@ The basic configuration requires the following properties:
 
 In the summary template, you can customize the imported HTML component, such as
 its title and any preamble or closing text.
-Be sure to retain the `import` statement and the `<summary>` component as a whole.
-The summary itself goes in `{{{variable_name}}}`.
+Be sure to retain anything with curly braces `{}`, and keep the newline at the end of the template.
 
 ### Additional configuration
 
@@ -158,12 +157,6 @@ file exclusions and the commit hash from when to evaluate content changes
 
 #### File exclusions
 
-To avoid summarizing certain files, list them in the `exclude` field.
-You can specify exclusions by regex patterns, file names, and directory names.
-Unlike `output_file`, the `exclude` patterns are relative to the input `directory`.
-
-Additional exclude examples:
-
 ```json
   "exclude": {
     "directories": ["blog/", "archive/", "temp/"],
@@ -172,10 +165,14 @@ Additional exclude examples:
   }
 ```
 
-When files get removed from `exclude`, i.e., they're newly included,
-then `docdigest` will summarize those files even if they're not changed.
-In other words, when you have a commit specified in the configuration file,
-`docdigest` summarizes both changed files and files that no longer get excluded.
+To avoid summarizing certain files, list them in the `exclude` field.
+You can specify exclusions by directory names, file names, and regex patterns.
+
+Important things to note:
+
+* The `exclude` patterns are relative to the `directory` parameter (whereas `directory` and `output_file` are relative to where you call `docdigest`).
+* For directories and files, regex is NOT supported.
+* When you remove something from `exclude`, then it'll get summarized whether or not the file changed.
 
 #### Commit hash
 
@@ -183,8 +180,11 @@ Summaries are only generated from files changed from the provided commit hash.
 
 For a first time run, don't include the `commit` field so that all docs get processed.
 Each subsequent iteration automatically updates the commit hash to the latest version.
-
 If no changes are detected, the `commit` field in the config file remains the same.
+
+If you add a new file that has NOT been committed, then git doesn't detect it
+as a changed file relative to the listed commit hash. That means it won't get summarized.
+You need to commit the new file before `docdigest` can summarize it.
 
 ## Execution modes
 
@@ -292,7 +292,7 @@ For more technical details, see the [design docs](./design/index.md) and the dia
 
 ## Remove a summary
 
-To remove a summary, you just need to revert the git commit that introduced the summary.
+To remove a summary, revert the git commit that introduced the summary.
 This removes the following content:
 
 * `summaries.js` file:
@@ -303,6 +303,12 @@ This removes the following content:
    * `<details>` block with the summary
 
 Optionally, update the `docdigest` configuration to list that file in the exclusions.
+
+To reset the docs and remove all summaries, update the exclude pattern.
+You can't exclude everything (`"exclude": {"**"}`), since it's like telling the program to run on no files.
+The easiest way is to exclude everything except 1+ existing file.
+
+Note that you can't create a dummy file for this process unless you commit it first, set the exclusions, run the program, then remove the dummy file. But then it's kind of like doing the previous method anyway.
 
 ## Troubleshooting
 
