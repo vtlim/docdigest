@@ -2,10 +2,12 @@
 sidebar_position: 2
 ---
 
+
+
 import {tutorial_basics_create_a_document} from "@site/static/js/summaries.js"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {tutorial_basics_create_a_document}
 

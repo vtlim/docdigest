@@ -3,10 +3,12 @@ sidebar_position: 6
 summary: YAY
 ---
 
+
+
 import {tutorial_basics_congratulations} from "@site/static/js/summaries.js"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {tutorial_basics_congratulations}
 

@@ -1,7 +1,7 @@
 import {{variable_name}} from "{import_path}"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {{variable_name}}
 

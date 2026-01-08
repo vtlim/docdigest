@@ -2,10 +2,12 @@
 sidebar_position: 1
 ---
 
+
+
 import {tutorial_extras_manage_docs_versions} from "@site/static/js/summaries.js"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {tutorial_extras_manage_docs_versions}
 
