@@ -68,7 +68,9 @@ Each updated summary is committed as a separate line change so that any change c
 
 ## Get started
 
-Install `docdigest`:
+### Install
+
+To install `docdigest`:
 
 ```sh
 pip install markdown-analysis anthropic
@@ -82,25 +84,54 @@ Run the help command to verify that it's installed:
 docdigest --help
 ```
 
-## How to use docdigest
+### Quickstart
 
-To use `docdigest`, all you need to do is:
+To use `docdigest`:
 
-1. Install the package in your Python environment. See [Get started](#get-started).
-
-1. Ensure you have an Anthropic API key as the environment variable `ANTHROPIC_API_KEY`. For example:
+1. Assign your Anthropic API key to the environment variable `ANTHROPIC_API_KEY`. For example:
    ```sh
    export ANTHROPIC_API_KEY="your-key"
    ```
 
-1. Create a configuration file.  
-   Default name: `docdigest_config.json`
+1. Create a configuration file `docdigest_config.json`. Update the configuration to point to your input docs and designate where to write the output file.
 
-1. Update the template file, `docdigest_template.md`.  
-   Check the `<summary>` title. Replace the footnote text with your own disclaimer or link to an about page.
+   <details><summary>Basic configuration</summary>
 
-1. Call the program.  
-   Quickstart command: `docdigest`
+   ```
+   import {{variable_name}} from "{import_path}"
+   
+   <details>
+   <summary>AI summary</summary>
+   
+   {{variable_name}}
+   
+   <br/><br/>
+   <span className="small-font">
+   <i>
+   <a href="https://example.com/">About AI summaries.</a>
+   </i>
+   </span>
+   
+   </details>
+      
+   ```
+   </details>
+
+1. Create a template file, `docdigest_template.md`. Replace the example link in the footer text.
+Optionally, you can change the summary expander title, change the footer text, or remove the footer altogether.
+
+   <details><summary>Basic template</summary>
+
+   ```
+   {
+     "directory": "example-docs/docs/",
+     "output_file": "example-docs/static/js/summaries.js",
+     "summary_template": "docdigest_template.md"
+   }   
+   ```
+   </details>
+
+1. Run the program by calling `docdigest`.
 
 The following sections go into more detail about using `docdigest`.
 For a reference list of commands, see [Commands](./COMMANDS.md).
@@ -272,27 +303,6 @@ changed files since the front matter content may not be in the PR diff context.
 In other words, you can't make a suggestion at line 3 when the only change
 in the doc is at line 50.
 
-## How it works
-
-__Input and output__: The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
-The output is a JavaScript file that contains the summary for each file.
-
-__Summary ID__: Each summary is identified by an ID based on the Docusaurus ID if it exists, else the filename.
-IDs are generated relative to the provided `directory` in the configuration.
-
-For example, let's say the configuration references directory `docs`,
-and `docs` has two subdirectories `tutorial` and `reference`.
-The summary IDs will look like `tutorial_quickstart` or `reference_syntax`,
-for `tutorial/quickstart.md` and `reference/syntax.md`, respectively.
-
-__Changed files__: At the first execution, the Markdown files are updated to import the summary using a variable.
-With future iterations, only the summary file changes, not the Markdown files.
-
-__Error handling__: If there is an error generating a summary, the output file will exclude it,
-and and the Markdown file will have the summary expander removed.
-
-For more technical details, see the [design docs](./design/index.md) and the diagram within.
-
 ## Remove a summary
 
 To remove a summary, revert the git commit that introduced the summary.
@@ -312,6 +322,27 @@ You can't exclude everything (`"exclude": {"**"}`), since it's like telling the 
 The easiest way is to exclude everything except 1+ existing file.
 
 Note that you can't create a dummy file for this process unless you commit it first, set the exclusions, run the program, then remove the dummy file. But then it's kind of like doing the previous method anyway.
+
+## How it works
+
+__Input and output__: The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
+The output is a JavaScript file that contains the summary for each file.
+
+__Summary ID__: Each summary is identified by an ID based on the Docusaurus ID if it exists, else the filename.
+IDs are generated relative to the provided `directory` in the configuration.
+
+For example, let's say the configuration references directory `docs`,
+and `docs` has two subdirectories `tutorial` and `reference`.
+The summary IDs will look like `tutorial_quickstart` or `reference_syntax`,
+for `tutorial/quickstart.md` and `reference/syntax.md`, respectively.
+
+__Changed files__: At the first execution, the Markdown files are updated to import the summary using a variable.
+With future iterations, only the summary file changes, not the Markdown files.
+
+__Error handling__: If there is an error generating a summary, it won't be included in the output file nor the Markdown file.
+If there was a summary component in the Markdown file, it gets removed.
+
+For more technical details, see the [design docs](./design/index.md) and the diagram within.
 
 ## Troubleshooting
 
