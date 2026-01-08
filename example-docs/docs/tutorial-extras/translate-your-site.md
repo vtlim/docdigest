@@ -2,10 +2,12 @@
 sidebar_position: 2
 ---
 
+
+
 import {tutorial_extras_translate_your_site} from "@site/static/js/summaries.js"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {tutorial_extras_translate_your_site}
 

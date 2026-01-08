@@ -5,7 +5,7 @@ sidebar_position: 1
 import {intro} from "@site/static/js/summaries.js"
 
 <details>
-<summary>Summary</summary>
+<summary>AI summary</summary>
 
 {intro}
 

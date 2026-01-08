@@ -61,14 +61,18 @@ The package can be adapted to work with other doc set configurations by changing
 
 ### GitHub
 
-`docdigest` assumes version control in a GitHub repository.
-It detects files changed from a reference commit hash and only generates summaries for those files.
-Version control is also important for the updated summaries.
-Each updated summary is committed as a separate line change so that any change can easily be reverted back.
+If you're only running the summary generation a single time, you don't have to use a GitHub repository.
+
+It's required when you specify a reference commit hash in the `docdigest` configuration.
+The application uses git to detect which files have changed since that commit and only generates summaries for those files.
+When you commit changes made by `docdigest`, the changes for each doc are committed separately so that you can `git revert` any doc you don't want to update.
+
 
 ## Get started
 
-Install `docdigest`:
+### Install
+
+To install `docdigest`:
 
 ```sh
 pip install markdown-analysis anthropic
@@ -82,22 +86,67 @@ Run the help command to verify that it's installed:
 docdigest --help
 ```
 
-## How to use docdigest
+### Quickstart
 
-To use `docdigest`, all you need to do is:
+To use `docdigest`:
 
-1. Install the package in your Python environment. See [Get started](#get-started).
-
-1. Ensure you have an Anthropic API key as the environment variable `ANTHROPIC_API_KEY`. For example:
+1. Assign your Anthropic API key to the environment variable `ANTHROPIC_API_KEY`. For example:
    ```sh
    export ANTHROPIC_API_KEY="your-key"
    ```
 
-1. Create a configuration file.  
-   Default name: `docdigest_config.json`
+1. Create a configuration file `docdigest_config.json`. Update the configuration to point to your input docs and designate where to write the output file.
 
-1. Call the program.  
-   Quickstart command: `docdigest`
+   <details><summary>Basic template</summary>
+
+   ```
+   {
+     "directory": "example-docs/docs/",
+     "output_file": "example-docs/static/js/summaries.js",
+     "summary_template": "docdigest_template.md"
+   }   
+   ```
+   </details>
+
+1. Create a template file, `docdigest_template.md`. Replace the example link in the footer text.
+Optionally, you can change the summary expander title, change the footer text, or remove the footer altogether.
+
+   <details><summary>Basic configuration</summary>
+
+   ```
+   import {{variable_name}} from "{import_path}"
+   
+   <details>
+   <summary>AI summary</summary>
+   
+   {{variable_name}}
+   
+   <br/><br/>
+   <span className="small-font">
+   <i>
+   <a href="https://example.com/">About AI summaries.</a>
+   </i>
+   </span>
+   
+   </details>
+      
+   ```
+   </details>
+
+1. Run the program in debug mode. This allows you to verify the file processing without calling the API yet.
+
+   ```
+   docdigest  --model debug
+   ```
+
+1. When asked whether to commit, type `n`.
+1. Review the output in your terminal. Ensure that it lists the correct set of docs and that the output is where you intend.
+1. View the summary components. Preview the docs such as using `npm run start`. If you're in a git repository, you can view line changes with `git diff`.
+1. If everything looks as expected, generate the summaries themselves:
+
+   ```
+   docdigest
+   ```
 
 The following sections go into more detail about using `docdigest`.
 For a reference list of commands, see [Commands](./COMMANDS.md).
@@ -117,46 +166,45 @@ To specify a custom configuration in your request:
 docdigest --config docdigest_custom.json
 ```
 
-### Simple configuration
-
-At the most basic level, include the following:
-
-* `directory`: the source folder of your docs
-* `output_file`: where to write the output file
-
-Both of these fields are relative to where you call `docdigest`.
+### Required properties
 
 ```json
 {
   "directory": "example-docs/docs/",
-  "output_file": "example-docs/static/js/summaries.js"
+  "output_file": "example-docs/static/js/summaries.js",
+  "summary_template": "docdigest_template.md"
 }
 ```
 
-### Advanced configuration
+The basic configuration requires the following properties:
+
+* `directory`: the source folder of your docs, relative to where you call `docdigest`
+* `output_file`: where to write the output file, relative to where you call `docdigest`
+* `summary_template`: file containing the template of the summary component to import
+
+In the summary template, you can customize the imported HTML component, such as
+its title and any preamble or closing text.
+Be sure to retain anything with curly braces `{}`, and keep the newline at the end of the template.
+
+### Additional configuration
+
+```json
+{
+  "directory": "example-docs/docs/",
+  "output_file": "example-docs/static/js/summaries.js",
+  "summary_template": "docdigest_template.md",
+  "exclude": {
+    "files": ["tutorial-basics/create-a-document.md"],
+  },
+  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856"
+}
+```
 
 To further configure the summary generation, you can designate
 file exclusions and the commit hash from when to evaluate content changes
 (no summaries are generated if the content didn't change).
 
-```json
-{
-  "directory": "example-docs/docs/",
-  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
-  "output_file": "example-docs/static/js/summaries.js",
-  "exclude": {
-    "files": ["tutorial-basics/create-a-document.md"],
-  }
-}
-```
-
-### File exclusions
-
-To avoid summarizing certain files, list them in the `exclude` field.
-You can specify exclusions by regex patterns, file names, and directory names.
-Unlike `output_file`, the `exclude` patterns are relative to the input `directory`.
-
-Additional exclude examples:
+#### File exclusions
 
 ```json
   "exclude": {
@@ -166,21 +214,28 @@ Additional exclude examples:
   }
 ```
 
-When files get removed from `exclude`, i.e., they're newly included,
-then `docdigest` will summarize those files even if they're not changed.
-In other words, when you have a commit specified in the configuration file,
-`docdigest` summarizes both changed files and files that no longer get excluded.
+To avoid summarizing certain files, list them in the `exclude` field.
+You can specify exclusions by directory names, file names, and regex patterns.
 
-### Commit hash
+Important things to note:
+
+* The `exclude` patterns are relative to the `directory` parameter (whereas `directory` and `output_file` are relative to where you call `docdigest`).
+* For directories and files, regex is NOT supported.
+* When you remove something from `exclude`, then it'll get summarized whether or not the file changed.
+
+#### Commit hash
 
 Summaries are only generated from files changed from the provided commit hash.
 
 For a first time run, don't include the `commit` field so that all docs get processed.
 Each subsequent iteration automatically updates the commit hash to the latest version.
-
 If no changes are detected, the `commit` field in the config file remains the same.
 
-## Execution models
+If you add a new file that has NOT been committed, then git doesn't detect it
+as a changed file relative to the listed commit hash. That means it won't get summarized.
+You need to commit the new file before `docdigest` can summarize it.
+
+## Execution modes
 
 You can use either the `debug` or `claude` model.
 The program runs in `debug` mode by default.
@@ -263,6 +318,26 @@ changed files since the front matter content may not be in the PR diff context.
 In other words, you can't make a suggestion at line 3 when the only change
 in the doc is at line 50.
 
+## Remove a summary
+
+To remove a summary, revert the git commit that introduced the summary.
+This removes the following content:
+
+* `summaries.js` file:
+   * `const` summary variable
+   * corresponding line in `module.exports`
+* Markdown file:
+   * import summary line
+   * `<details>` block with the summary
+
+Optionally, update the `docdigest` configuration to list that file in the exclusions.
+
+To reset the docs and remove all summaries, update the exclude pattern.
+You can't exclude everything (`"exclude": {"**"}`), since it's like telling the program to run on no files.
+The easiest way is to exclude everything except 1+ existing file.
+
+Note that you can't create a dummy file for this process unless you commit it first, set the exclusions, run the program, then remove the dummy file. But then it's kind of like doing the previous method anyway.
+
 ## How it works
 
 __Input and output__: The input to `docdigest` is a location to Markdown files and a commit hash provided in a JSON configuration file.
@@ -279,24 +354,10 @@ for `tutorial/quickstart.md` and `reference/syntax.md`, respectively.
 __Changed files__: At the first execution, the Markdown files are updated to import the summary using a variable.
 With future iterations, only the summary file changes, not the Markdown files.
 
-__Error handling__: If there is an error generating a summary, the output file will exclude it,
-and and the Markdown file will have the summary expander removed.
+__Error handling__: If there is an error generating a summary, it won't be included in the output file nor the Markdown file.
+If there was a summary component in the Markdown file, it gets removed.
 
 For more technical details, see the [design docs](./design/index.md) and the diagram within.
-
-## Remove a summary
-
-To remove a summary, you just need to revert the git commit that introduced the summary.
-This removes the following content:
-
-* `summaries.js` file:
-   * `const` summary variable
-   * corresponding line in `module.exports`
-* Markdown file:
-   * import summary line
-   * `<details>` block with the summary
-
-Optionally, update the `docdigest` configuration to list that file in the exclusions.
 
 ## Troubleshooting
 
