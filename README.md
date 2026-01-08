@@ -96,6 +96,9 @@ To use `docdigest`, all you need to do is:
 1. Create a configuration file.  
    Default name: `docdigest_config.json`
 
+1. Update the template file, `docdigest_template.md`.  
+   Check the `<summary>` title. Replace the footnote text with your own disclaimer or link to an about page.
+
 1. Call the program.  
    Quickstart command: `docdigest`
 
