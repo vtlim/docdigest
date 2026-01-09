@@ -6,9 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "docdigest"
 version = "0.1.0"
 description = "AI-powered documentation summarization tool"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.13"
 dependencies = [
-    "markdown-analysis",
-    "anthropic"
+    "markdown-analysis>=0.1.5",
+    "anthropic>=0.69.0"
 ]
 
 [project.scripts]
