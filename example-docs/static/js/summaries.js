@@ -2,7 +2,7 @@
 Summaries for each topic, matched by filename
 */
 
-const intro = "Learn how to quickly set up and run your first Docusaurus site using the classic template. This guide covers installation commands, starting the development server, and making your first edits with automatic reload.";
+const intro = "Learn how to quickly set up a new Docusaurus site using the classic template. Install dependencies and run a local development server. Edit documentation files and see changes reload automatically in your browser.";
 const tutorial_basics_congratulations = "Summary in debug mode. Headers: 2, Word count: 43, Random string: eVPvh";
 const tutorial_basics_create_a_document = "Summary in debug mode. Headers: 5, Word count: 49, Random string: GpJSS";
 const tutorial_basics_create_a_page = "Summary in debug mode. Headers: 3, Word count: 38, Random string: sE1pW";
