@@ -20,8 +20,8 @@ def main():
                        help='Model to use for summarization')
     parser.add_argument('--meta', action='store_true',
                        help='Generate meta descriptions instead of summaries')
-    parser.add_argument('--dry-run', action='store_true',
-                       help='Estimate costs without running summarization or meta generation')
+    parser.add_argument('--estimate-cost', action='store_true',
+                       help='Estimate API cost without processing files')
     parser.add_argument('--automation', action='store_true',
                        help='Run in automation mode (no interactive prompts, auto-commit and push)')
 
@@ -100,8 +100,8 @@ def main():
                 print("No files to generate meta descriptions for")
                 return
 
-            # Dry-run mode: estimate costs and exit
-            if args.dry_run:
+            # Estimate costs and exit
+            if args.estimate_cost:
                 estimate_meta_costs(parsed_docs)
                 return
 
@@ -155,8 +155,8 @@ def main():
             args.config
         )
 
-        # Dry-run mode: estimate costs and exit
-        if args.dry_run:
+        # Estimate costs and exit
+        if args.estimate_cost:
             if parsed_docs:
                 estimate_costs(parsed_docs, args.model)
             else:

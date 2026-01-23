@@ -266,7 +266,7 @@ This reflects potential randomness in the LLM generating a different summary for
 First estimate costs to make sure you're parsing the right content and generating the correct IDs:
 
 ```
-docdigest --model claude --dry-run
+docdigest --model claude --estimate-cost
 ```
 
 If everything looks correct, run the summarization:
@@ -292,7 +292,7 @@ Commits are kept separate so that it's easier to revert if desired.
 ## Meta descriptions
 
 You can also generate meta descriptions separately from summarization.
-This also uses Claude, with an available `--dry-run` option.
+This also uses Claude, with an available `--estimate-cost` option.
 
 When run locally, the program checks for `description` in the front matter
 of the Markdown files. It updates the description field if present and adds it if not.
@@ -337,6 +337,16 @@ You can't exclude everything (`"exclude": {"**"}`), since it's like telling the 
 The easiest way is to exclude everything except 1+ existing file.
 
 Note that you can't create a dummy file for this process unless you commit it first, set the exclusions, run the program, then remove the dummy file. But then it's kind of like doing the previous method anyway.
+
+## Content requirements
+
+`docdigest` has been successfully tested on a doc set of 75 topics containing over 53k tokens.
+The doc set contained elements including tables, lists, images, code blocks, and HTML elements such as expanders.
+
+To successfully run this program, ensure that each of your Markdown files:
+* Uses valid Markdown syntax
+* Contains YAML frontmatter at the top of the page
+* Is tracked by git (if you use the `commit` parameter)
 
 ## How it works
 
