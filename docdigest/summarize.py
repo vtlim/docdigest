@@ -342,7 +342,7 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, o
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
-        model: Model to use for summarization ("debug" or "claude")
+        llm: LLM to use for summarization ("none" or "claude")
         output_file: Path to output JavaScript file
         config_path: Optional path to config file (for checking exclusions)
 

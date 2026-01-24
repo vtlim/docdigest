@@ -133,7 +133,7 @@ Optionally, you can change the summary expander title, change the footer text, o
    ```
    </details>
 
-1. Run the program in dry run mode. This allows you to verify the file processing without calling the API yet.
+1. Perform a dry run. This allows you to verify the file processing without calling the API yet.
 
    ```
    docdigest  --llm none
@@ -235,17 +235,17 @@ If you add a new file that has NOT been committed, then git doesn't detect it
 as a changed file relative to the listed commit hash. That means it won't get summarized.
 You need to commit the new file before `docdigest` can summarize it.
 
-## Execution modes
+## LLMs
 
-You can use either the `debug` or `claude` model.
-The program runs in `debug` mode by default.
-You can also extend this package to include other LLM models like GPT.
+Use the `--llm` flag to specify which model to use, currently `none` or `claude`.
+The default is `none` which performs a dry run and doesn't make any API calls.
+This package can be extended to include other models like GPT.
 
-### Dry run mode
+### Dry run
 
-Use dry run mode to verify basic functionality of `docdigest`.
+Perform a dry run to verify basic functionality of `docdigest`.
 It does everything except call the LLM for summary generation.
-To use dry run mode:
+To do a dry run:
 
 ```
 docdigest --llm none
@@ -261,7 +261,7 @@ The output shows a count of headers, paragraph word count, and a random string.
 The random string ensures that `summaries.js` is a changed file.
 This reflects potential randomness in the LLM generating a different summary for the same content.
 
-### Summarize with Claude
+### Claude
 
 First estimate costs to make sure you're parsing the right content and generating the correct IDs:
 
@@ -275,9 +275,9 @@ If everything looks correct, run the summarization:
 docdigest --llm claude
 ```
 
-Summarization is also available in automation mode, intended for use in
-a continuous integration platform like GitHub Actions.
-To summarize in automation mode:
+You can also run `docdigest` without any user prompts.
+This is intended for use in a continuous integration platform like GitHub Actions.
+To summarize in an automated CI setup:
 
 ```
 docdigest --automation --llm claude

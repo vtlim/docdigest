@@ -162,7 +162,7 @@ def main():
         # Estimate costs and exit
         if args.estimate_cost:
             if args.llm == 'none':
-                print("ℹ️  No API costs when using --llm none (placeholder mode)")
+                print("ℹ️  No API costs when using --llm none (dry run mode)")
                 return
             if parsed_docs:
                 estimate_costs(parsed_docs, args.llm)
