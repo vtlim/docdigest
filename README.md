@@ -300,7 +300,7 @@ You can then create a branch, add those files, then commit and push the changes.
 To generate meta descriptions locally:
 
 ```
-docdigest --meta
+docdigest --generate meta-descriptions
 ```
 
 The automation mode is designed to run in a PR that contains changed Markdown files.
@@ -310,7 +310,7 @@ You can then manually edit the files to include the descriptions.
 To generate meta descriptions in an automated workflow:
 
 ```
-docdigest --meta --automation
+docdigest --generate meta-descriptions --automation
 ```
 
 Note that the automation mode can't create inline suggestions for the

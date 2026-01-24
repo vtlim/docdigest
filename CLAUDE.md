@@ -29,7 +29,7 @@ docdigest --llm claude --estimate-cost
 docdigest --llm claude
 
 # Generate meta descriptions
-docdigest --meta
+docdigest --generate meta-descriptions
 
 # Run in automation mode (for CI/CD)
 docdigest --automation --llm claude

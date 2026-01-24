@@ -18,8 +18,8 @@ def main():
                        help='Path to config file')
     parser.add_argument('--llm', default='none', choices=['none', 'claude'],
                        help='LLM to use (or none for dry run content)')
-    parser.add_argument('--meta', action='store_true',
-                       help='Generate meta descriptions instead of summaries')
+    parser.add_argument('--generate', default='summaries', choices=['summaries', 'meta-descriptions'],
+                       help='What to generate: summaries or meta-descriptions')
     parser.add_argument('--estimate-cost', action='store_true',
                        help='Estimate API cost without processing files')
     parser.add_argument('--automation', action='store_true',
@@ -35,7 +35,7 @@ def main():
         output_file = config.get('output_file', 'summaries.js')
 
         # META DESCRIPTION MODE
-        if args.meta:
+        if args.generate == 'meta-descriptions':
             pr_info = None  # Store PR info for later use
             pr_changed_files_set = None
 
@@ -150,7 +150,7 @@ def main():
             print("\n✅ Meta description generation completed!")
             return
 
-        # SUMMARY MODE (existing logic)
+        # SUMMARY MODE
         # Run the full pipeline
         print("\n📖 Parsing documentation...")
         parsed_docs = parse_markdown_files(

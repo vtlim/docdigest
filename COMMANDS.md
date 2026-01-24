@@ -22,8 +22,8 @@ docdigest --llm claude
 docdigest --automation --llm claude
 
 # Generate meta descriptions, printed to stdout
-docdigest --meta
+docdigest --generate meta-descriptions
 
 # Generate meta descriptions, and post suggestions to GitHub PR
-docdigest --meta --automation
+docdigest --generate meta-descriptions --automation
 ```
