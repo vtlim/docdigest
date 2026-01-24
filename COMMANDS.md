@@ -9,17 +9,17 @@ docdigest
 # Specify custom config
 docdigest --config docdigest_custom.json
 
-# Use debug mode to ensure processing goes as expected
-docdigest --model debug
+# Use dry run mode to ensure processing goes as expected
+docdigest --llm none
 
 # Estimate costs with Claude
-docdigest --model claude --dry-run
+docdigest --llm claude --estimate-cost
 
 # Summarize with Claude
-docdigest --model claude
+docdigest --llm claude
 
 # Run summarization in automation mode
-docdigest --automation --model claude
+docdigest --automation --llm claude
 
 # Generate meta descriptions, printed to stdout
 docdigest --meta

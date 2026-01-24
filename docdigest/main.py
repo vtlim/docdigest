@@ -7,7 +7,7 @@ from .parse_docs import parse_markdown_files
 from .summarize import generate_summaries, estimate_costs
 from .import_results import update_markdown_imports
 from .commitify import commit_changes
-from .meta_description import generate_meta_descriptions, estimate_costs as estimate_meta_costs
+from .meta_description import generate_meta_descriptions, estimate_meta_costs
 from .import_meta import update_markdown_meta, post_pr_suggestions, get_pr_number, get_repo_info
 from .file_utils import get_all_markdown_files, get_variable_name
 from .git_utils import run_git_command
@@ -16,8 +16,8 @@ def main():
     parser = argparse.ArgumentParser(description='Generate AI summaries for documentation')
     parser.add_argument('--config', default='docdigest_config.json',
                        help='Path to config file')
-    parser.add_argument('--model', default='debug', choices=['debug', 'claude'],
-                       help='Model to use for summarization')
+    parser.add_argument('--llm', default='none', choices=['none', 'claude'],
+                       help='LLM to use (or none for dry run content)')
     parser.add_argument('--meta', action='store_true',
                        help='Generate meta descriptions instead of summaries')
     parser.add_argument('--estimate-cost', action='store_true',
@@ -102,12 +102,16 @@ def main():
 
             # Estimate costs and exit
             if args.estimate_cost:
-                estimate_meta_costs(parsed_docs)
+                if args.llm == 'none':
+                    print("ℹ️  No API costs when using --llm none (dry run mode)")
+                    return
+                estimate_meta_costs(parsed_docs, args.llm)
                 return
 
             print(f"\n🤖 Generating meta descriptions using Claude...")
             meta_descriptions = generate_meta_descriptions(
                 parsed_docs=parsed_docs,
+                llm=args.llm,
                 output_file=output_file,
                 config_path=args.config
             )
@@ -157,18 +161,21 @@ def main():
 
         # Estimate costs and exit
         if args.estimate_cost:
+            if args.llm == 'none':
+                print("ℹ️  No API costs when using --llm none (placeholder mode)")
+                return
             if parsed_docs:
-                estimate_costs(parsed_docs, args.model)
+                estimate_costs(parsed_docs, args.llm)
             else:
                 print("No files to estimate costs for")
             return
 
         # Generate summaries only if there are files to process
         if parsed_docs:
-            print(f"\n🤖 Generating summaries using {args.model} model...")
+            print(f"\n🤖 Generating summaries using LLM {args.llm}...")
             summaries, changes_to_commit = generate_summaries(
                 parsed_docs=parsed_docs,
-                model=args.model,
+                llm=args.llm,
                 output_file=output_file,
                 config_path=args.config
             )
@@ -177,7 +184,7 @@ def main():
             print(f"\n🧹 No new summaries to generate, cleaning up any excluded summaries...")
             summaries, changes_to_commit = generate_summaries(
                 parsed_docs={},
-                model=args.model,
+                llm=args.llm,
                 output_file=output_file,
                 config_path=args.config
             )

@@ -96,21 +96,21 @@ def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     return input_cost + output_cost
 
 
-def estimate_costs(parsed_docs: Dict[str, Dict[str, List[str]]], model: str) -> None:
+def estimate_costs(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str) -> None:
     """
     Estimate and display costs for summarizing documents.
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
-        model: Model to use ("debug" or "claude")
+        llm: LLM to use ("none" or "claude")
     """
     print(f"🧮 Dry-run mode: Cost estimation")
 
     num_docs = len(parsed_docs)
     print(f"  • Documents to summarize: {num_docs}")
 
-    if model == "debug":
-        print(f"  • Cost: $0.00 (debug mode uses no API)")
+    if llm == "none":
+        print(f"  • Cost: $0.00 (dry run mode uses no API)")
         return
 
     # Estimate tokens for all docs
@@ -131,15 +131,15 @@ def estimate_costs(parsed_docs: Dict[str, Dict[str, List[str]]], model: str) -> 
     print(f"\n  (Input: ${CLAUDE_INPUT_PRICE}/M tokens, Output: ${CLAUDE_OUTPUT_PRICE}/M tokens)")
 
 
-def summarize_debug(parsed_doc: Dict[str, List[str]]) -> str:
+def summarize_dry_run(parsed_doc: Dict[str, List[str]]) -> str:
     """
-    Debug summarization that returns a placeholder string with structure info.
+    Dry run summarization that returns a test string with structure info.
 
     Args:
         parsed_doc: Dictionary with "headers" and "paragraphs" lists
 
     Returns:
-        Debug placeholder string with header and word counts
+        Dry run test string with header and word counts
     """
     header_count = len(parsed_doc.get("headers", []))
     word_count = sum(len(p.split()) for p in parsed_doc.get("paragraphs", []))
@@ -148,7 +148,7 @@ def summarize_debug(parsed_doc: Dict[str, List[str]]) -> str:
     characters = string.ascii_letters + string.digits
     random_alphanumeric = ''.join(random.choice(characters) for _ in range(5))
 
-    return f"Summary in debug mode. Headers: {header_count}, Word count: {word_count}, Random string: {random_alphanumeric}"
+    return f"Summary in dry run mode. Headers: {header_count}, Word count: {word_count}, Random string: {random_alphanumeric}"
 
 
 def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
@@ -231,29 +231,29 @@ def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
     raise RuntimeError("Failed to get response from Claude API")
 
 
-def summarize(model: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, int, int]:
+def summarize(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, int, int]:
     """
     Generate summary using specified model.
 
     Args:
-        model: Model to use ("debug" or "claude")
+        llm: LLM to use ("none" or "claude")
         parsed_doc: Dictionary with "headers" and "paragraphs" lists (needed for both models)
 
     Returns:
         Tuple of (summary: str, input_tokens: int, output_tokens: int)
         Input and output count show the costs per each doc
-        For debug mode, tokens are 0
+        For dry run mode, tokens are 0
 
     Raises:
-        ValueError: If unknown model specified
+        ValueError: If unknown LLM specified
     """
-    if model == "debug":
-        summary = summarize_debug(parsed_doc)
+    if llm == "none":
+        summary = summarize_dry_run(parsed_doc)
         return summary, 0, 0
-    elif model == "claude":
+    elif llm == "claude":
         return summarize_claude(parsed_doc)
     else:
-        raise ValueError(f"Unknown model: {model}")
+        raise ValueError(f"Unknown LLM: {llm}")
 
 
 def format_results(summaries: Dict[str, str]) -> str:
@@ -334,7 +334,7 @@ def store_results(content: str, output_file: str, is_update: bool = False) -> No
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
 
-def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str, output_file: str, config_path: str = None) -> Dict[str, str]:
+def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, output_file: str, config_path: str = None) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
     Merges new summaries with existing ones to preserve unchanged file summaries.
@@ -364,7 +364,7 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
 
     for var_name, parsed_doc in parsed_docs.items():
         try:
-            summary, input_tokens, output_tokens = summarize(model, parsed_doc)
+            summary, input_tokens, output_tokens = summarize(llm, parsed_doc)
             new_summaries[var_name] = summary
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
@@ -413,7 +413,7 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], model: str,
         is_update_only = len(new_summaries) == 0
         store_results(js_content, output_file, is_update=is_update_only)
 
-        if model == "claude" and new_summaries:
+        if llm == "claude" and new_summaries:
             total_cost = calculate_cost(total_input_tokens, total_output_tokens)
             print(f"  • Total input tokens: {total_input_tokens:,}")
             print(f"  • Total output tokens: {total_output_tokens:,}")
@@ -438,5 +438,5 @@ if __name__ == "__main__":
         }
     }
 
-    summaries = generate_summaries(sample_docs, "debug", "test_summaries.js")
+    summaries = generate_summaries(sample_docs, "none", "test_summaries.js")
     print(f"Generated summaries: {summaries}")

@@ -19,20 +19,20 @@ pip install -e .
 
 ### Running docdigest
 ```bash
-# Debug mode (no API calls, for testing)
-docdigest --model debug
+# Dry run mode (no API calls, for testing)
+docdigest --llm none
 
 # Estimate costs before running
-docdigest --model claude --estimate-cost
+docdigest --llm claude --estimate-cost
 
 # Generate summaries with Claude
-docdigest --model claude
+docdigest --llm claude
 
 # Generate meta descriptions
 docdigest --meta
 
 # Run in automation mode (for CI/CD)
-docdigest --automation --model claude
+docdigest --automation --llm claude
 ```
 
 ### Testing

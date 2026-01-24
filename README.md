@@ -133,10 +133,10 @@ Optionally, you can change the summary expander title, change the footer text, o
    ```
    </details>
 
-1. Run the program in debug mode. This allows you to verify the file processing without calling the API yet.
+1. Run the program in dry run mode. This allows you to verify the file processing without calling the API yet.
 
    ```
-   docdigest  --model debug
+   docdigest  --llm none
    ```
 
 1. When asked whether to commit, type `n`.
@@ -241,20 +241,20 @@ You can use either the `debug` or `claude` model.
 The program runs in `debug` mode by default.
 You can also extend this package to include other LLM models like GPT.
 
-### Debug
+### Dry run mode
 
-Use debug mode to verify basic functionality of `docdigest`.
+Use dry run mode to verify basic functionality of `docdigest`.
 It does everything except call the LLM for summary generation.
-To use debug mode:
+To use dry run mode:
 
 ```
-docdigest --model debug
+docdigest --llm none
 ```
 
 Example output in `summaries.js`:
 
 ```
-const intro = "Summary in debug mode. Headers: 5, Word count: 145, Random string: nqkpJ";
+const intro = "Summary in dry run mode. Headers: 5, Word count: 145, Random string: nqkpJ";
 ```
 
 The output shows a count of headers, paragraph word count, and a random string.
@@ -266,13 +266,13 @@ This reflects potential randomness in the LLM generating a different summary for
 First estimate costs to make sure you're parsing the right content and generating the correct IDs:
 
 ```
-docdigest --model claude --estimate-cost
+docdigest --llm claude --estimate-cost
 ```
 
 If everything looks correct, run the summarization:
 
 ```
-docdigest --model claude
+docdigest --llm claude
 ```
 
 Summarization is also available in automation mode, intended for use in
@@ -280,7 +280,7 @@ a continuous integration platform like GitHub Actions.
 To summarize in automation mode:
 
 ```
-docdigest --automation --model claude
+docdigest --automation --llm claude
 ```
 
 The automation mode automatically creates a new branch called `bot-summaries`.

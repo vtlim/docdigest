@@ -56,7 +56,7 @@ Various modes of summarization (basic or advanced) and to debug the package inde
 
 #### Debug mode
 
-Generates placeholder text without any API calls.
+Generates dry run text without any API calls.
 
 The debug value lists the header count and word count of the input text.
 
