@@ -196,18 +196,19 @@ def main():
             print("\n📝 Updating markdown file imports...")
             update_markdown_imports(summaries, args.config)
 
-            # In interactive mode, ask if user wants to commit and push
             should_commit = True
             should_push = False
 
+            # In interactive mode, ask if user wants to commit and push
             if not args.automation:
                 from .commitify import prompt_user
                 should_commit = prompt_user("Commit changes?", "y")
 
                 if should_commit:
                     should_push = prompt_user("Push changes to remote?", "y")
+
+            # Automation mode - always commit and push
             else:
-                # Automation mode - always commit and push
                 should_push = True
 
             if not should_commit:
@@ -218,6 +219,12 @@ def main():
 
                 if not commit_success:
                     print("⚠️  Commit process had issues.")
+
+        # If no changes to commit, return variable to exit automation
+        else:
+            if args.automation and os.environ.get('GITHUB_OUTPUT'):
+                with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                    f.write('create_pr=false\n')
 
         print("\n✅ Pipeline completed successfully!")
 
