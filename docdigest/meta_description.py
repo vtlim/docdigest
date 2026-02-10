@@ -48,17 +48,22 @@ def estimate_token_count(parsed_doc: Dict[str, List[str]]) -> int:
     return estimated_tokens
 
 
-def estimate_costs(parsed_docs: Dict[str, Dict[str, List[str]]]) -> None:
+def estimate_meta_costs(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str) -> None:
     """
     Estimate and display costs for generating meta descriptions.
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
+        llm: LLM to use ("none" or "claude")
     """
-    print(f"🧮 Dry-run mode: Cost estimation for meta descriptions")
+    print(f"🧮 Cost estimation for meta descriptions")
 
     num_docs = len(parsed_docs)
     print(f"  • Documents to process: {num_docs}")
+
+    if llm == "none":
+        print(f"  • Cost: $0.00 (dry run mode uses no API)")
+        return
 
     if num_docs == 0:
         print(f"  • Cost: $0.00 (no documents to process)")
@@ -123,6 +128,26 @@ Ensure the meta descriptions meet these requirements:
 
 Provide ONLY the meta description text, nothing else. No quotes, no preamble, just the description.
 """
+
+
+def generate_meta_dry_run(parsed_doc: Dict[str, List[str]]) -> str:
+    """
+    Generate dry run meta description for testing.
+
+    Args:
+        parsed_doc: Dictionary with "headers" and "paragraphs" lists
+
+    Returns:
+        Dry run meta description string
+    """
+    header_count = len(parsed_doc.get("headers", []))
+
+    # Count total words in paragraphs
+    word_count = 0
+    for paragraph in parsed_doc.get("paragraphs", []):
+        word_count += len(paragraph.split())
+
+    return f"Dry run meta description. Headers: {header_count}, Words: {word_count}"
 
 
 def generate_meta_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
@@ -210,8 +235,33 @@ def generate_meta_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, in
     raise RuntimeError("Failed to get response from Claude API")
 
 
+def generate_meta(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, int, int]:
+    """
+    Generate a meta description using the specified LLM.
+
+    Args:
+        llm: LLM to use ("none" or "claude")
+        parsed_doc: Dictionary with "headers" and "paragraphs" lists
+
+    Returns:
+        Tuple of (meta_description, input_tokens, output_tokens)
+        For dry run mode, tokens are 0
+
+    Raises:
+        ValueError: If unknown LLM specified
+    """
+    if llm == "none":
+        meta_description = generate_meta_dry_run(parsed_doc)
+        return meta_description, 0, 0
+    elif llm == "claude":
+        return generate_meta_claude(parsed_doc)
+    else:
+        raise ValueError(f"Unknown LLM: {llm}")
+
+
 def generate_meta_descriptions(
     parsed_docs: Dict[str, Dict[str, List[str]]],
+    llm: str,
     output_file: str,
     config_path: str
 ) -> Dict[str, str]:
@@ -220,6 +270,7 @@ def generate_meta_descriptions(
 
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
+        llm: LLM to use ("none" or "claude")
         output_file: Path to output file (not used for meta, but kept for consistency)
         config_path: Path to config file (not used currently, but kept for future)
 
@@ -236,7 +287,7 @@ def generate_meta_descriptions(
 
     for var_name, parsed_doc in parsed_docs.items():
         try:
-            meta, input_tokens, output_tokens = generate_meta_claude(parsed_doc)
+            meta, input_tokens, output_tokens = generate_meta(llm, parsed_doc)
             meta_descriptions[var_name] = meta
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens

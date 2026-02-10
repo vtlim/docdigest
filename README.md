@@ -133,10 +133,10 @@ Optionally, you can change the summary expander title, change the footer text, o
    ```
    </details>
 
-1. Run the program in debug mode. This allows you to verify the file processing without calling the API yet.
+1. Perform a dry run. This allows you to verify the file processing without calling the API yet.
 
    ```
-   docdigest  --model debug
+   docdigest  --llm none
    ```
 
 1. When asked whether to commit, type `n`.
@@ -235,52 +235,52 @@ If you add a new file that has NOT been committed, then git doesn't detect it
 as a changed file relative to the listed commit hash. That means it won't get summarized.
 You need to commit the new file before `docdigest` can summarize it.
 
-## Execution modes
+## LLMs
 
-You can use either the `debug` or `claude` model.
-The program runs in `debug` mode by default.
-You can also extend this package to include other LLM models like GPT.
+Use the `--llm` flag to specify which model to use, currently `none` or `claude`.
+The default is `none` which performs a dry run and doesn't make any API calls.
+This package can be extended to include other models like GPT.
 
-### Debug
+### Dry run
 
-Use debug mode to verify basic functionality of `docdigest`.
+Perform a dry run to verify basic functionality of `docdigest`.
 It does everything except call the LLM for summary generation.
-To use debug mode:
+To do a dry run:
 
 ```
-docdigest --model debug
+docdigest --llm none
 ```
 
 Example output in `summaries.js`:
 
 ```
-const intro = "Summary in debug mode. Headers: 5, Word count: 145, Random string: nqkpJ";
+const intro = "Summary in dry run mode. Headers: 5, Word count: 145, Random string: nqkpJ";
 ```
 
 The output shows a count of headers, paragraph word count, and a random string.
 The random string ensures that `summaries.js` is a changed file.
 This reflects potential randomness in the LLM generating a different summary for the same content.
 
-### Summarize with Claude
+### Claude
 
 First estimate costs to make sure you're parsing the right content and generating the correct IDs:
 
 ```
-docdigest --model claude --dry-run
+docdigest --llm claude --estimate-cost
 ```
 
 If everything looks correct, run the summarization:
 
 ```
-docdigest --model claude
+docdigest --llm claude
 ```
 
-Summarization is also available in automation mode, intended for use in
-a continuous integration platform like GitHub Actions.
-To summarize in automation mode:
+You can also run `docdigest` without any user prompts.
+This is intended for use in a continuous integration platform like GitHub Actions.
+To summarize in an automated CI setup:
 
 ```
-docdigest --automation --model claude
+docdigest --automation --llm claude
 ```
 
 The automation mode automatically creates a new branch called `bot-summaries`.
@@ -292,7 +292,7 @@ Commits are kept separate so that it's easier to revert if desired.
 ## Meta descriptions
 
 You can also generate meta descriptions separately from summarization.
-This also uses Claude, with an available `--dry-run` option.
+This also uses Claude, with an available `--estimate-cost` option.
 
 When run locally, the program checks for `description` in the front matter
 of the Markdown files. It updates the description field if present and adds it if not.
@@ -300,7 +300,7 @@ You can then create a branch, add those files, then commit and push the changes.
 To generate meta descriptions locally:
 
 ```
-docdigest --meta
+docdigest --generate meta-descriptions
 ```
 
 The automation mode is designed to run in a PR that contains changed Markdown files.
@@ -310,7 +310,7 @@ You can then manually edit the files to include the descriptions.
 To generate meta descriptions in an automated workflow:
 
 ```
-docdigest --meta --automation
+docdigest --generate meta-descriptions --automation
 ```
 
 Note that the automation mode can't create inline suggestions for the
@@ -337,6 +337,16 @@ You can't exclude everything (`"exclude": {"**"}`), since it's like telling the 
 The easiest way is to exclude everything except 1+ existing file.
 
 Note that you can't create a dummy file for this process unless you commit it first, set the exclusions, run the program, then remove the dummy file. But then it's kind of like doing the previous method anyway.
+
+## Content requirements
+
+`docdigest` has been successfully tested on a doc set of 75 topics containing over 53k tokens.
+The doc set contained elements including tables, lists, images, code blocks, and HTML elements such as expanders.
+
+To successfully run this program, ensure that each of your Markdown files:
+* Uses valid Markdown syntax
+* Contains YAML frontmatter at the top of the page
+* Is tracked by git (if you use the `commit` parameter)
 
 ## How it works
 
