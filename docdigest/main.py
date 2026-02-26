@@ -108,7 +108,7 @@ def main():
                 estimate_meta_costs(parsed_docs, args.llm)
                 return
 
-            print(f"\n🤖 Generating meta descriptions using Claude...")
+            print(f"\n🤖 Generating meta descriptions using LLM {args.llm}...")
             meta_descriptions = generate_meta_descriptions(
                 parsed_docs=parsed_docs,
                 llm=args.llm,

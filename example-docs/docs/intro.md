@@ -1,4 +1,5 @@
 ---
+description: "Learn how to get started with Docusaurus in under 5 minutes. Create a new site, run the dev server, and see live changes instantly."
 sidebar_position: 1
 ---
 
@@ -63,3 +64,4 @@ The `cd` command changes the directory you're working with. In order to work wit
 The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
 
 Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+
