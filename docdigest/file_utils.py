@@ -22,7 +22,7 @@ def get_all_markdown_files(directory: str) -> List[str]:
     markdown_files = []
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.endswith('.md'):
+            if file.endswith((".md", ".mdx")):
                 markdown_files.append(os.path.join(root, file))
     return markdown_files
 
