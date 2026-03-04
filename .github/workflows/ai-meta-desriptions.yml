@@ -40,5 +40,5 @@ jobs:
       run: |
         docdigest --generate meta-descriptions --llm claude --automation
       env:
-        ANTHROPIC_API_KEY: ${{ vars.ANTHROPIC_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         GITHUB_TOKEN: ${{ github.token }}
