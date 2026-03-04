@@ -52,7 +52,7 @@ def get_latest_main_hash() -> str:
     Raises:
         RuntimeError: If unable to get commit hash
     """
-    success, stdout, _ = run_git_command(['git', 'rev-parse', 'main'])
+    success, stdout, _ = run_git_command(['git', 'rev-parse', 'origin/main'])
     if not success:
         raise RuntimeError("🚨 Failed to get latest main git commit hash")
     return stdout
