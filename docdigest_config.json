@@ -7,5 +7,9 @@
     "files": [],
     "patterns": []
   },
-  "commit": "5b1de13842adb9799a810d4fde802249488e2dbc"
+  "commit": "5b1de13842adb9799a810d4fde802249488e2dbc",
+  "prompt_supplement": [
+    "Always use 'DataFlow Pro' as the product name, never just 'DataFlow'",
+    "Emphasize enterprise features when discussing capabilities"
+  ]
 }

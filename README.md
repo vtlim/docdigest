@@ -196,13 +196,17 @@ Be sure to retain anything with curly braces `{}`, and keep the newline at the e
   "exclude": {
     "files": ["tutorial-basics/create-a-document.md"],
   },
-  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856"
+  "commit": "a02e3da5f33ec2c605b110540c1ee844998a0856",
+  "prompt_supplement": [
+    "Always use 'DataFlow Pro' as the product name, never just 'DataFlow'",
+    "Emphasize enterprise features and scalability when relevant"
+  ]
 }
 ```
 
 To further configure the summary generation, you can designate
-file exclusions and the commit hash from when to evaluate content changes
-(no summaries are generated if the content didn't change).
+file exclusions, the commit hash from when to evaluate content changes
+(no summaries are generated if the content didn't change), and additional prompting instructions.
 
 #### File exclusions
 
@@ -234,6 +238,26 @@ If no changes are detected, the `commit` field in the config file remains the sa
 If you add a new file that has NOT been committed, then git doesn't detect it
 as a changed file relative to the listed commit hash. That means it won't get summarized.
 You need to commit the new file before `docdigest` can summarize it.
+
+#### Prompt supplements
+
+```json
+  "prompt_supplement": [
+    "Always use 'DataFlow Pro' as the product name, never just 'DataFlow'",
+    "Emphasize enterprise features and scalability when relevant",
+    "Use active voice and present tense consistently"
+  ]
+```
+
+To customize the AI summarization with specific instructions for your documentation, add a `prompt_supplement` field containing an array of instructions. These instructions will be added to the base summarization prompt for all generated summaries.
+
+Use prompt supplements to enforce:
+* Brand and product name consistency
+* Specific terminology or technical language
+* Tone and style preferences
+* Domain-specific requirements
+
+For detailed best practices on writing effective prompt supplements, see [PROMPT_SUPPLEMENTS.md](./PROMPT_SUPPLEMENTS.md).
 
 ## LLMs
 
