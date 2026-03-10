@@ -18,9 +18,36 @@ CLAUDE_OUTPUT_PRICE = 15.00  # $15 per 1M output tokens
 # Token limits
 MAX_OUTPUT_TOKENS = 60  # Max tokens for meta description output
 
-
 # Token estimation
 WORDS_TO_TOKENS_RATIO = 1.3  # Approximate ratio for token estimation
+
+# Global prompt for meta description generation
+META_DESCRIPTION_PROMPT = """
+You are an SEO expert writing meta descriptions for technical documentation.
+
+Create a compelling meta description (150-160 characters) that:
+- Summarizes the page's main value proposition
+- Uses action-oriented language (e.g., "Learn", "Discover", "Explore")
+- Naturally incorporates relevant keywords
+- Entices users to click from search results
+- Uses clear, accessible language
+- Focuses on benefits to the reader
+
+Ensure the meta descriptions meet these requirements:
+- The description MUST be grammatically correct with proper punctuation and article use.
+- The entire description MUST contain 160 characters or fewer.
+- Each sentence in the description MUST contain 15 words or fewer.
+
+{supplement}
+
+**Content to summarize:**
+{content}
+
+**Document headers:**
+{headers}
+
+Provide ONLY the meta description text, nothing else. No quotes, no preamble, just the description.
+"""
 
 
 def estimate_token_count(parsed_doc: Dict[str, List[str]]) -> int:
@@ -101,37 +128,6 @@ def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     input_cost = (input_tokens / 1_000_000) * CLAUDE_INPUT_PRICE
     output_cost = (output_tokens / 1_000_000) * CLAUDE_OUTPUT_PRICE
     return input_cost + output_cost
-
-
-
-
-# Global prompt for meta description generation
-META_DESCRIPTION_PROMPT = """
-You are an SEO expert writing meta descriptions for technical documentation.
-
-Create a compelling meta description (150-160 characters) that:
-- Summarizes the page's main value proposition
-- Uses action-oriented language (e.g., "Learn", "Discover", "Explore")
-- Naturally incorporates relevant keywords
-- Entices users to click from search results
-- Uses clear, accessible language
-- Focuses on benefits to the reader
-
-Ensure the meta descriptions meet these requirements:
-- The description MUST be grammatically correct with proper punctuation and article use.
-- The entire description MUST contain 160 characters or fewer.
-- Each sentence in the description MUST contain 15 words or fewer.
-
-{supplement}
-
-**Content to summarize:**
-{content}
-
-**Document headers:**
-{headers}
-
-Provide ONLY the meta description text, nothing else. No quotes, no preamble, just the description.
-"""
 
 
 def generate_meta_dry_run(parsed_doc: Dict[str, List[str]]) -> str:
