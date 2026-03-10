@@ -35,12 +35,13 @@ Adhere to the following guidelines.
 - Use the provided headers to understand the page structure, but don't give them disproportionate weight in the summary
 - Assume the reader is a technical user
 - Do not include unnecessary jargon or too much detail
+- Do not include any prerequisite information such as required permissions or setup
 
 **Prose and style:**
 - Use clear, accessible language that matches the original tone
-- Use plain text between 25-35 words and no special formatting
+- Use plain text between 25-40 words and no special formatting
 - Ensure that each sentence is 15 words or fewer and is grammatically correct
-- Consistently use "Explains..." and "Covers..." rather than "This guide explains..." and "It covers..."
+- Begin sentences with third-person singular simple present verb with an ellipted (dropped) subject, such as "Explains" or "Covers". Assume the dropped subject is always the page.
 - Use active rather than passive language
 
 {supplement}
@@ -65,20 +66,20 @@ Summaries for each topic, matched by filename
 def format_prompt_supplements(supplements: List[str] = None) -> str:
     """
     Format prompt supplements into a section to be inserted into the prompt.
-    
+
     Args:
         supplements: Optional list of additional instructions
-    
+
     Returns:
         Formatted supplement section as string, or empty string if no supplements
     """
     if not supplements:
         return ""
-    
+
     supplement_section = "**Additional instructions:**\n"
     for instruction in supplements:
         supplement_section += f"- {instruction}\n"
-    
+
     return supplement_section
 
 
