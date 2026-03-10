@@ -198,11 +198,6 @@ def generate_meta_claude(parsed_doc: Dict[str, List[str]], supplement_text: str 
             input_tokens = message.usage.input_tokens
             output_tokens = message.usage.output_tokens
 
-            # Validate character length and warn if out of range
-            char_count = len(meta_description)
-            if char_count < 150 or char_count > 160:
-                print(f"⚠️  Meta description is {char_count} chars (expected 150-160)")
-
             return meta_description, input_tokens, output_tokens
 
         except anthropic.RateLimitError as e:
