@@ -103,6 +103,10 @@ Add a `prompt_supplement` field to your `docdigest_config.json`:
 ### Problem: Conflicting or unclear results
 **Solution:** Review your instructions for conflicts. Try removing some instructions and testing with fewer, clearer directives.
 
+Base prompts:
+* [Summarization](./docdigest/summarize.py)
+* [Meta descriptions](./docdigest/meta_description.py)
+
 ### Problem: Instructions too generic
 **Solution:** Be more specific. Instead of "use good writing," specify "use active voice and keep sentences under 15 words."
 

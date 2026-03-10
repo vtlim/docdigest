@@ -103,6 +103,27 @@ def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     return input_cost + output_cost
 
 
+def format_prompt_supplements(supplements: List[str] = None) -> str:
+    """
+    Format prompt supplements into a section to be inserted into the prompt.
+
+    Args:
+        supplements: Optional list of additional instructions
+
+    Returns:
+        Formatted supplement section as string, or empty string if no supplements
+    """
+    if not supplements:
+        return ""
+
+    # Build the supplement section
+    supplement_section = "**Additional instructions:**\n"
+    for instruction in supplements:
+        supplement_section += f"- {instruction}\n"
+
+    return supplement_section
+
+
 # Global prompt for meta description generation
 META_DESCRIPTION_PROMPT = """
 You are an SEO expert writing meta descriptions for technical documentation.
@@ -119,6 +140,8 @@ Ensure the meta descriptions meet these requirements:
 - The description MUST be grammatically correct with proper punctuation and article use.
 - The entire description MUST contain 160 characters or fewer.
 - Each sentence in the description MUST contain 15 words or fewer.
+
+{supplement}
 
 **Content to summarize:**
 {content}
@@ -150,12 +173,13 @@ def generate_meta_dry_run(parsed_doc: Dict[str, List[str]]) -> str:
     return f"Dry run meta description. Headers: {header_count}, Words: {word_count}"
 
 
-def generate_meta_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
+def generate_meta_claude(parsed_doc: Dict[str, List[str]], supplement_text: str = "") -> tuple[str, int, int]:
     """
     Generate meta description using Claude API.
 
     Args:
         parsed_doc: Dictionary with "headers" and "paragraphs" lists
+        supplement_text: Formatted supplement text to include in prompt
 
     Returns:
         Tuple of (meta_description: str, input_tokens: int, output_tokens: int)
@@ -172,8 +196,12 @@ def generate_meta_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, in
     headers_text = ", ".join(parsed_doc.get("headers", []))
     content_text = " ".join(parsed_doc.get("paragraphs", []))
 
-    # Use the global prompt template
-    prompt = META_DESCRIPTION_PROMPT.format(headers=headers_text, content=content_text)
+    # Use the global prompt template with supplement
+    prompt = META_DESCRIPTION_PROMPT.format(
+        headers=headers_text,
+        content=content_text,
+        supplement=supplement_text
+    )
 
     # Call Claude API with retry logic
     max_retries = 5
@@ -235,13 +263,14 @@ def generate_meta_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, in
     raise RuntimeError("Failed to get response from Claude API")
 
 
-def generate_meta(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, int, int]:
+def generate_meta(llm: str, parsed_doc: Dict[str, List[str]] = None, supplement_text: str = "") -> tuple[str, int, int]:
     """
     Generate a meta description using the specified LLM.
 
     Args:
         llm: LLM to use ("none" or "claude")
         parsed_doc: Dictionary with "headers" and "paragraphs" lists
+        supplement_text: Formatted supplement text (only used for claude, ignored for "none")
 
     Returns:
         Tuple of (meta_description, input_tokens, output_tokens)
@@ -254,7 +283,7 @@ def generate_meta(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[st
         meta_description = generate_meta_dry_run(parsed_doc)
         return meta_description, 0, 0
     elif llm == "claude":
-        return generate_meta_claude(parsed_doc)
+        return generate_meta_claude(parsed_doc, supplement_text)
     else:
         raise ValueError(f"Unknown LLM: {llm}")
 
@@ -272,7 +301,7 @@ def generate_meta_descriptions(
         parsed_docs: Dictionary mapping variable names to document structure
         llm: LLM to use ("none" or "claude")
         output_file: Path to output file (not used for meta, but kept for consistency)
-        config_path: Path to config file (not used currently, but kept for future)
+        config_path: Path to config file (used to load prompt supplements)
 
     Returns:
         Dictionary mapping variable names to their meta descriptions
@@ -281,13 +310,18 @@ def generate_meta_descriptions(
         print("No documents to generate meta descriptions for.")
         return {}
 
+    # Load config and format supplement text
+    from .config import load_config
+    config = load_config(config_path)
+    supplement_text = format_prompt_supplements(config.get('prompt_supplement', []))
+
     meta_descriptions = {}
     total_input_tokens = 0
     total_output_tokens = 0
 
     for var_name, parsed_doc in parsed_docs.items():
         try:
-            meta, input_tokens, output_tokens = generate_meta(llm, parsed_doc)
+            meta, input_tokens, output_tokens = generate_meta(llm, parsed_doc, supplement_text)
             meta_descriptions[var_name] = meta
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
