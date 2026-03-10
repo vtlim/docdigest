@@ -25,18 +25,18 @@ WORDS_TO_TOKENS_RATIO = 1.3  # Approximate ratio for token estimation
 META_DESCRIPTION_PROMPT = """
 You are an SEO expert writing meta descriptions for technical documentation.
 
-Create a compelling meta description (150-160 characters) that:
+Create a compelling meta description (120-160 characters) that:
 - Summarizes the page's main value proposition
 - Uses action-oriented language (e.g., "Learn", "Discover", "Explore")
-- Naturally incorporates relevant keywords
+- Naturally incorporates relevant keywords without too much jargon or technical details
 - Entices users to click from search results
 - Uses clear, accessible language
 - Focuses on benefits to the reader
 
 Ensure the meta descriptions meet these requirements:
 - The description MUST be grammatically correct with proper punctuation and article use.
-- The entire description MUST contain 160 characters or fewer.
-- Each sentence in the description MUST contain 15 words or fewer.
+- The entire description MUST contain fewer than 160 characters.
+- Each sentence in the description MUST contain fewer than 15 words.
 
 {supplement}
 
