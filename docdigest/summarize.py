@@ -63,25 +63,6 @@ Summaries for each topic, matched by filename
 """
 
 
-def format_prompt_supplements(supplements: List[str] = None) -> str:
-    """
-    Format prompt supplements into a section to be inserted into the prompt.
-
-    Args:
-        supplements: Optional list of additional instructions
-
-    Returns:
-        Formatted supplement section as string, or empty string if no supplements
-    """
-    if not supplements:
-        return ""
-
-    supplement_section = "**Additional instructions:**\n"
-    for instruction in supplements:
-        supplement_section += f"- {instruction}\n"
-
-    return supplement_section
-
 
 def estimate_token_count(parsed_doc: Dict[str, List[str]]) -> int:
     """
@@ -385,7 +366,7 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, o
         return {}, False
 
     # Load config and format supplement text
-    from .config import load_config
+    from .config import load_config, format_prompt_supplements
     config = load_config(config_path)
     supplement_text = format_prompt_supplements(config.get('prompt_supplement', []))
 

@@ -251,6 +251,8 @@ You need to commit the new file before `docdigest` can summarize it.
 
 To customize the AI summarization with specific instructions for your documentation, add a `prompt_supplement` field containing an array of instructions. These instructions will be added to the base summarization prompt for all generated summaries.
 
+If you use the same configuration file for summaries and meta descriptions, the prompt supplements apply to both.
+
 Use prompt supplements to enforce:
 * Brand and product name consistency
 * Specific terminology or technical language

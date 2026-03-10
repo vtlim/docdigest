@@ -103,25 +103,6 @@ def calculate_cost(input_tokens: int, output_tokens: int) -> float:
     return input_cost + output_cost
 
 
-def format_prompt_supplements(supplements: List[str] = None) -> str:
-    """
-    Format prompt supplements into a section to be inserted into the prompt.
-
-    Args:
-        supplements: Optional list of additional instructions
-
-    Returns:
-        Formatted supplement section as string, or empty string if no supplements
-    """
-    if not supplements:
-        return ""
-
-    # Build the supplement section
-    supplement_section = "**Additional instructions:**\n"
-    for instruction in supplements:
-        supplement_section += f"- {instruction}\n"
-
-    return supplement_section
 
 
 # Global prompt for meta description generation
@@ -291,8 +272,7 @@ def generate_meta(llm: str, parsed_doc: Dict[str, List[str]] = None, supplement_
 def generate_meta_descriptions(
     parsed_docs: Dict[str, Dict[str, List[str]]],
     llm: str,
-    output_file: str,
-    config_path: str
+    supplement_text: str = ""
 ) -> Dict[str, str]:
     """
     Main function that generates meta descriptions for all parsed documents.
@@ -300,8 +280,7 @@ def generate_meta_descriptions(
     Args:
         parsed_docs: Dictionary mapping variable names to document structure
         llm: LLM to use ("none" or "claude")
-        output_file: Path to output file (not used for meta, but kept for consistency)
-        config_path: Path to config file (used to load prompt supplements)
+        supplement_text: Formatted supplement text to include in prompts
 
     Returns:
         Dictionary mapping variable names to their meta descriptions
@@ -309,11 +288,6 @@ def generate_meta_descriptions(
     if not parsed_docs:
         print("No documents to generate meta descriptions for.")
         return {}
-
-    # Load config and format supplement text
-    from .config import load_config
-    config = load_config(config_path)
-    supplement_text = format_prompt_supplements(config.get('prompt_supplement', []))
 
     meta_descriptions = {}
     total_input_tokens = 0
