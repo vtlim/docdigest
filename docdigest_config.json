@@ -7,5 +7,9 @@
     "files": [],
     "patterns": []
   },
-  "commit": "5b1de13842adb9799a810d4fde802249488e2dbc"
+  "commit": "5b1de13842adb9799a810d4fde802249488e2dbc",
+  "prompt_supplement": [
+    "Always mention the product name 'Docusaurus' at least once per summary.",
+    "Do not form a possessive from any product name. Use the name as a modifier or rewrite using 'of'. For example: 'Docusaurus features' not 'Docusaurus's features'."
+  ]
 }

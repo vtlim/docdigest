@@ -35,13 +35,16 @@ Adhere to the following guidelines.
 - Use the provided headers to understand the page structure, but don't give them disproportionate weight in the summary
 - Assume the reader is a technical user
 - Do not include unnecessary jargon or too much detail
+- Do not include any prerequisite information such as required permissions or setup
 
 **Prose and style:**
 - Use clear, accessible language that matches the original tone
-- Use plain text between 25-35 words and no special formatting
+- Use plain text between 25-40 words and no special formatting
 - Ensure that each sentence is 15 words or fewer and is grammatically correct
-- Consistently use "Explains..." and "Covers..." rather than "This guide explains..." and "It covers..."
+- Begin sentences with third-person singular simple present verb with an ellipted (dropped) subject, such as "Explains" or "Covers". Assume the dropped subject is always the page.
 - Use active rather than passive language
+
+{supplement}
 
 **Content to summarize:**
 {content}
@@ -58,6 +61,7 @@ Summaries for each topic, matched by filename
 */
 
 """
+
 
 
 def estimate_token_count(parsed_doc: Dict[str, List[str]]) -> int:
@@ -156,12 +160,13 @@ def summarize_dry_run(parsed_doc: Dict[str, List[str]]) -> str:
     return f"Summary in dry run mode. Headers: {header_count}, Word count: {word_count}, Random string: {random_alphanumeric}"
 
 
-def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
+def summarize_claude(parsed_doc: Dict[str, List[str]], supplement_text: str = "") -> tuple[str, int, int]:
     """
     Claude summarization with header-aware prompting.
 
     Args:
         parsed_doc: Dictionary with "headers" and "paragraphs" lists
+        supplement_text: Formatted supplement text to include in prompt
 
     Returns:
         Tuple of (summary: str, input_tokens: int, output_tokens: int)
@@ -179,7 +184,7 @@ def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
     content_text = " ".join(parsed_doc.get("paragraphs", []))
 
     # Use the global prompt template with header emphasis
-    prompt = SUMMARIZATION_PROMPT.format(headers=headers_text, content=content_text)
+    prompt = SUMMARIZATION_PROMPT.format(headers=headers_text, content=content_text, supplement=supplement_text)
 
     # Call Claude API with retry logic
     max_retries = 5
@@ -236,13 +241,14 @@ def summarize_claude(parsed_doc: Dict[str, List[str]]) -> tuple[str, int, int]:
     raise RuntimeError("Failed to get response from Claude API")
 
 
-def summarize(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, int, int]:
+def summarize(llm: str, parsed_doc: Dict[str, List[str]] = None, supplement_text: str = "") -> tuple[str, int, int]:
     """
     Generate summary using specified model.
 
     Args:
         llm: LLM to use ("none" or "claude")
         parsed_doc: Dictionary with "headers" and "paragraphs" lists (needed for both models)
+        supplement_text: Formatted supplement text (only used for claude, ignored for "none")
 
     Returns:
         Tuple of (summary: str, input_tokens: int, output_tokens: int)
@@ -256,7 +262,7 @@ def summarize(llm: str, parsed_doc: Dict[str, List[str]] = None) -> tuple[str, i
         summary = summarize_dry_run(parsed_doc)
         return summary, 0, 0
     elif llm == "claude":
-        return summarize_claude(parsed_doc)
+        return summarize_claude(parsed_doc, supplement_text)
     else:
         raise ValueError(f"Unknown LLM: {llm}")
 
@@ -339,7 +345,7 @@ def store_results(content: str, output_file: str, is_update: bool = False) -> No
         raise RuntimeError(f"Failed to write to {output_file}: {e}")
 
 
-def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, output_file: str, config_path: str = None) -> Dict[str, str]:
+def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, output_file: str, config_path: str) -> Dict[str, str]:
     """
     Main function that generates summaries for all parsed documents.
     Merges new summaries with existing ones to preserve unchanged file summaries.
@@ -349,15 +355,20 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, o
         parsed_docs: Dictionary mapping variable names to document structure
         llm: LLM to use for summarization ("none" or "claude")
         output_file: Path to output JavaScript file
-        config_path: Optional path to config file (for checking exclusions)
+        config_path: Path to config file (for checking exclusions and loading prompt supplements)
 
     Returns:
         Dictionary mapping variable names to their summaries (new and existing, minus excluded)
         Boolean of whether or not changes were detected to determine whether to do git actions
     """
-    if not parsed_docs and not config_path:
+    if not parsed_docs:
         print("No documents to summarize.")
         return {}, False
+
+    # Load config and format supplement text
+    from .config import load_config, format_prompt_supplements
+    config = load_config(config_path)
+    supplement_text = format_prompt_supplements(config.get('prompt_supplement', []))
 
     # Read existing summaries first
     existing_summaries = parse_summaries_file(output_file)
@@ -369,7 +380,7 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, o
 
     for var_name, parsed_doc in parsed_docs.items():
         try:
-            summary, input_tokens, output_tokens = summarize(llm, parsed_doc)
+            summary, input_tokens, output_tokens = summarize(llm, parsed_doc, supplement_text)
             new_summaries[var_name] = summary
             total_input_tokens += input_tokens
             total_output_tokens += output_tokens
@@ -384,28 +395,25 @@ def generate_summaries(parsed_docs: Dict[str, Dict[str, List[str]]], llm: str, o
     all_summaries = {**existing_summaries, **new_summaries}
 
     # Filter out summaries for excluded files
-    if config_path:
-        from .config import load_config
-        from .file_utils import get_all_markdown_files, get_variable_name, should_exclude_file
+    from .file_utils import get_all_markdown_files, get_variable_name, should_exclude_file
 
-        config = load_config(config_path)
-        directory = config.get('directory', '')
-        exclude_config = config.get('exclude', {})
+    directory = config.get('directory', '')
+    exclude_config = config.get('exclude', {})
 
-        if directory and exclude_config:
-            # Build set of variable names for non-excluded files
-            all_markdown_files = get_all_markdown_files(directory)
-            valid_var_names = set()
+    if directory and exclude_config:
+        # Build set of variable names for non-excluded files
+        all_markdown_files = get_all_markdown_files(directory)
+        valid_var_names = set()
 
-            for md_file in all_markdown_files:
-                if not should_exclude_file(md_file, exclude_config, directory):
-                    var_name = get_variable_name(md_file, directory)
-                    valid_var_names.add(var_name)
+        for md_file in all_markdown_files:
+            if not should_exclude_file(md_file, exclude_config, directory):
+                var_name = get_variable_name(md_file, directory)
+                valid_var_names.add(var_name)
 
-            # Remove summaries for excluded files
-            excluded_summaries = {k: v for k, v in all_summaries.items() if k in valid_var_names}
-            removed_count = len(all_summaries) - len(excluded_summaries)
-            all_summaries = excluded_summaries
+        # Remove summaries for excluded files
+        excluded_summaries = {k: v for k, v in all_summaries.items() if k in valid_var_names}
+        removed_count = len(all_summaries) - len(excluded_summaries)
+        all_summaries = excluded_summaries
 
     # If there aren't new or removed summaries, skip ahead
     if all_summaries == existing_summaries:

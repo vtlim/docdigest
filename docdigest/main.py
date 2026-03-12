@@ -2,7 +2,7 @@
 import sys
 import os
 import argparse
-from .config import load_config
+from .config import load_config, format_prompt_supplements
 from .parse_docs import parse_markdown_files
 from .summarize import generate_summaries, estimate_costs
 from .import_results import update_markdown_imports
@@ -109,11 +109,12 @@ def main():
                 return
 
             print(f"\n🤖 Generating meta descriptions using LLM {args.llm}...")
+            config = load_config(args.config)
+            supplement_text = format_prompt_supplements(config.get('prompt_supplement', []))
             meta_descriptions = generate_meta_descriptions(
                 parsed_docs=parsed_docs,
                 llm=args.llm,
-                output_file=output_file,
-                config_path=args.config
+                supplement_text=supplement_text
             )
 
             if not meta_descriptions:

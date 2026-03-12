@@ -4,7 +4,7 @@ Handles loading and saving of JSON configuration files.
 """
 
 import json
-from typing import Dict
+from typing import Dict, List
 
 
 def load_config(config_path: str) -> Dict:
@@ -36,3 +36,23 @@ def save_config(config_path: str, config: Dict) -> None:
     """
     with open(config_path, 'w', encoding='utf-8') as file:
         json.dump(config, file, indent=2)
+
+
+def format_prompt_supplements(supplements: List[str] = None) -> str:
+    """
+    Format prompt supplements into a section to be inserted into the prompt.
+
+    Args:
+        supplements: Optional list of additional instructions
+
+    Returns:
+        Formatted supplement section as string, or empty string if no supplements
+    """
+    if not supplements:
+        return ""
+
+    supplement_section = "**Additional instructions:**\n"
+    for instruction in supplements:
+        supplement_section += f"- {instruction}\n"
+
+    return supplement_section
