@@ -27,11 +27,11 @@ You are an SEO expert writing meta descriptions for technical documentation.
 
 Create a compelling meta description (120-160 characters) that:
 - Summarizes the page's main value proposition
-- Uses action-oriented language (e.g., "Learn", "Discover", "Explore")
-- Naturally incorporates relevant keywords without too much jargon or technical details
+- Focuses on benefits to the reader
 - Entices users to click from search results
 - Uses clear, accessible language
-- Focuses on benefits to the reader
+- Naturally incorporates relevant keywords without too much jargon or technical details
+- Uses imperative verbs that encourage engagement, such as 'Learn', 'Discover', or 'Explore' — but varied and not limited to these.
 
 Ensure the meta descriptions meet these requirements:
 - The description MUST be grammatically correct with proper punctuation and article use.
