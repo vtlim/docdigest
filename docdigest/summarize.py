@@ -41,6 +41,7 @@ Adhere to the following guidelines.
 - Use clear, accessible language that matches the original tone
 - Use plain text between 25-40 words and no special formatting
 - Ensure that each sentence is 15 words or fewer and is grammatically correct
+- Address the reader directly as 'you' rather than 'users' or 'the user'
 - Begin sentences with third-person singular simple present verb with an ellipted (dropped) subject, such as "Explains" or "Covers". Assume the dropped subject is always the page.
 - Use active rather than passive language
 
