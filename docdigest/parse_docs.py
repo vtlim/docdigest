@@ -88,9 +88,6 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         if old_exclude_config is not None:
             exclude_changed = json.dumps(exclude_config, sort_keys=True) != json.dumps(old_exclude_config, sort_keys=True)
 
-    if exclude_changed:
-        print(f"ℹ️  Exclude configuration changed since {last_commit}")
-
     # If commit hash is provided, git must be available
     if last_commit is not None:
         if not is_git_repository():
@@ -112,8 +109,13 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
         # Get all files to find newly included ones
         all_files = get_all_markdown_files(directory)
 
-        print(f"  • Config change: old exclude = {old_exclude_config}")
-        print(f"  • Config change: new exclude = {exclude_config}")
+        print(f"ℹ️  Exclude configuration has changed")
+        words1 = set(str(old_exclude_config).split())
+        words2 = set(str(exclude_config).split())
+        diff_add = list(words2.difference(words1))
+        diff_rm = list(words1.difference(words2))
+        if diff_add: print(f"  • Added: {diff_add}")
+        if diff_rm: print(f"  • Removed: {diff_rm}")
 
         # Find files that were excluded before but not now
         newly_included_files = []
@@ -126,7 +128,7 @@ def get_files_to_process(directory: str, last_commit: Optional[str], exclude_con
 
         # Combine changed files with newly included files (remove duplicates)
         all_files = list(set(changed_files + newly_included_files))
-        print(f"Processing {len(all_files)} files")
+        print(f"\nProcessing {len(all_files)} files")
 
     else:
         # Commit hash provided and exclude unchanged - only get changed files

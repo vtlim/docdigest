@@ -86,16 +86,17 @@ def get_git_changed_files(directory: str, since_commit: str) -> List[str]:
     import os
 
     success, stdout, _ = run_git_command(['git', 'diff', '--name-only', f'{since_commit}'])
-
     if not success:
         raise RuntimeError(f"🚨 Failed to get changed files since commit {since_commit}")
 
+    success, now_commit, _ = run_git_command(['git', 'rev-parse', 'HEAD'])
+    print(f"Getting files changed from {since_commit} to {now_commit}\n")
     changed_files = stdout.split('\n') if stdout else []
 
     # Filter for markdown files in the specified directory
     markdown_files = []
     for file_path in changed_files:
-        if (file_path.endswith('.md') and
+        if (file_path.endswith(('.md', '.mdx')) and
             file_path.startswith(directory) and
             os.path.exists(file_path)):
             markdown_files.append(file_path)

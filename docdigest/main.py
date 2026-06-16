@@ -36,36 +36,35 @@ def main():
 
         # META DESCRIPTION MODE
         if args.generate == 'meta-descriptions':
-            pr_info = None  # Store PR info for later use
             pr_changed_files_set = None
 
             # In automation mode, only process PR-changed markdown files
             if args.automation:
-                print("\n🔍 Getting PR changed files...")
+                from .import_meta import get_pr_number, get_repo_info, get_pr_changed_files
+
+                # Get PR details
+                owner, repo = get_repo_info()
+                pr_number = get_pr_number()
+                if not pr_number:
+                    raise RuntimeError("Could not determine PR number from environment")
+
+                # Get changed files
+                print(f"\n🔍 Getting changed files in PR {pr_number}...")
                 try:
-                    from .import_meta import get_pr_number, get_repo_info, get_pr_changed_files
-
-                    pr_number = get_pr_number()
-                    if not pr_number:
-                        raise RuntimeError("Could not determine PR number from environment")
-
-                    owner, repo = get_repo_info()
                     pr_changed_files = get_pr_changed_files(owner, repo, pr_number)
-
-                    # Store for later
-                    pr_info = (owner, repo, pr_number)
-
-                    # Filter to only markdown files and store in set for fast lookup
-                    pr_changed_files_set = {f for f in pr_changed_files if f.endswith('.md')}
-                    print(f"  • PR #{pr_number} has {len(pr_changed_files_set)} changed markdown files")
-
-                    if not pr_changed_files_set:
-                        print("No markdown files changed in this PR")
-                        return
-
                 except Exception as e:
-                    print(f"⚠️  Failed to get PR changed files: {e}")
+                    print(f"⚠️  Failed to get changed files: {e}")
                     return
+
+                # Filter to only markdown files and store in set for fast lookup
+                print(f"  • Changed files: {pr_changed_files}")
+                pr_changed_files_set = {f for f in pr_changed_files if f.endswith(('.md', '.mdx'))}
+                print(f"    with {len(pr_changed_files_set)} changed markdown files")
+
+                if not pr_changed_files_set:
+                    print("  • No markdown files changed in this PR")
+                    return
+
 
             # Parse documentation
             print("\n📖 Parsing documentation...")

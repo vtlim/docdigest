@@ -252,7 +252,7 @@ def commit_changes(output_file: str, config_path: str, is_automation: bool = Fal
                     directory = config.get('directory', '')
 
                     # Check if it's a markdown file in the docs directory
-                    if not (directory and filepath.startswith(directory) and filepath.endswith('.md')):
+                    if not (directory and filepath.startswith(directory) and filepath.endswith(('.md', '.mdx'))):
                         non_docdigest_changes.append(filepath)
 
             if non_docdigest_changes:
